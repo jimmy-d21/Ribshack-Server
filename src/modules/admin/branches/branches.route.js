@@ -7,5 +7,6 @@ const router = express.Router();
 router.get("/", verifyToken, AdminBranchesController.getAllBranches);
 router.post("/", verifyToken, AdminBranchesController.addBranch);
 router.put("/:branchId", verifyToken, AdminBranchesController.updateBranch);
+router.delete("/:branchId", verifyToken, AdminBranchesController.deleteBranch);
 
 export default router;

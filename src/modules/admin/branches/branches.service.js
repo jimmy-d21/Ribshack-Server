@@ -101,6 +101,17 @@ const AdminBranchesService = {
 
     return updatedBranch;
   },
+
+  delete: async (branchId) => {
+    // Check if it exists
+    const branch = await AdminBranchesModel.findById(branchId);
+    if (!branch) {
+      throw new Error("Branch not found");
+    }
+
+    // Perform the deletion
+    return await AdminBranchesModel.deleteById(branchId);
+  },
 };
 
 export default AdminBranchesService;

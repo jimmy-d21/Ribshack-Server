@@ -113,6 +113,27 @@ const AdminBranchesController = {
       return res.status(500).json({ success: false, message: error.message });
     }
   },
+
+  deleteBranch: async (req, res) => {
+    try {
+      const { branchId } = req.params;
+
+      if (!branchId) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Branch ID is required" });
+      }
+
+      await AdminBranchesService.delete(branchId);
+
+      return res.status(200).json({
+        success: true,
+        message: "Branch deleted successfully",
+      });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  },
 };
 
 export default AdminBranchesController;

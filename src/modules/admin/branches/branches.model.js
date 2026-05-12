@@ -171,6 +171,12 @@ class AdminBranchesModel {
       return rows[0];
     }
   }
+
+  static async deleteById(id) {
+    const sql = `DELETE FROM branches WHERE branch_id = $1`;
+    const result = await db.query(sql, [id]);
+    return result.rowCount > 0;
+  }
 }
 
 export default AdminBranchesModel;
