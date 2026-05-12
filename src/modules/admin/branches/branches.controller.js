@@ -10,6 +10,74 @@ const AdminBranchesController = {
       return res.status(500).json({ success: false, message: error.message });
     }
   },
+
+  addBranch: async (req, res) => {
+    try {
+      const {
+        branch_name,
+        full_address,
+        city,
+        region, // e.g. "Visayas", "Luzon", "Mindanao"
+        manager_name,
+        contact_number,
+        username,
+        password,
+      } = req.body;
+
+      // Check for missing fields
+      if (
+        !branch_name ||
+        !full_address ||
+        !city ||
+        !region ||
+        !manager_name ||
+        !contact_number ||
+        !username ||
+        !password
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Please provide all required fields including credentials",
+        });
+      }
+
+      // Check for empty strings
+      if (
+        !branch_name.trim() ||
+        !full_address.trim() ||
+        !city.trim() ||
+        !region.trim() ||
+        !manager_name.trim() ||
+        !contact_number.trim() ||
+        !username.trim() ||
+        !password.trim()
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Fields cannot be empty or whitespace",
+        });
+      }
+
+      const newBranch = await AdminBranchesService.create({
+        branch_name: branch_name.trim(),
+        full_address: full_address.trim(),
+        city: city.trim(),
+        region: region.trim(),
+        manager_name: manager_name.trim(),
+        contact_number: contact_number.trim(),
+        username: username.trim(),
+        password,
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "Branch created successfully",
+        branch: newBranch,
+      });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  },
 };
 
 export default AdminBranchesController;
