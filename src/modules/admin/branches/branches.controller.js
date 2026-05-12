@@ -11,6 +11,7 @@ const AdminBranchesController = {
     }
   },
 
+  // Todo: Add branch_status_logs
   addBranch: async (req, res) => {
     try {
       const {
@@ -79,6 +80,7 @@ const AdminBranchesController = {
     }
   },
 
+  // Todo: Add branch_status_logs
   updateBranch: async (req, res) => {
     try {
       const { branchId } = req.params;
@@ -129,6 +131,32 @@ const AdminBranchesController = {
       return res.status(200).json({
         success: true,
         message: "Branch deleted successfully",
+      });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  },
+
+  updateStatus: async (req, res) => {
+    try {
+      const { branchId, status } = req.params;
+
+      if (!branchId || !status) {
+        return res.status(400).json({
+          success: false,
+          message: "Branch ID and Status are required",
+        });
+      }
+
+      const updatedBranch = await AdminBranchesService.updateStatus(
+        branchId,
+        status,
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: `Branch is now ${status.toUpperCase()}`,
+        data: updatedBranch,
       });
     } catch (error) {
       return res.status(500).json({ success: false, message: error.message });

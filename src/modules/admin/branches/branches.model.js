@@ -177,6 +177,28 @@ class AdminBranchesModel {
     const result = await db.query(sql, [id]);
     return result.rowCount > 0;
   }
+
+  static async updateStatus(client, branchId, isOpen) {
+    const sql = `
+      UPDATE branches
+      SET is_open = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE branch_id = $2
+      RETURNING 
+        branch_id, branch_name, is_open, manager_name, updated_at;
+    `;
+    const { rows } = await client.query(sql, [isOpen, branchId]);
+    return rows[0];
+  }
+
+  static async createStatusLogs(client, branchId, statusText) {
+    const sql = `
+      INSERT INTO branch_status_logs (branch_id, status)
+      VALUES ($1, $2)
+      RETURNING *;
+    `;
+    const { rows } = await client.query(sql, [branchId, statusText]);
+    return rows[0];
+  }
 }
 
 export default AdminBranchesModel;

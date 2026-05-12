@@ -1,6 +1,7 @@
 // branches.service.js
 import bcrypt from "bcryptjs";
 import AdminBranchesModel from "./branches.model.js";
+import db from "../../../config/db.js";
 
 const AdminBranchesService = {
   getAllBranches: async () => {
@@ -111,6 +112,43 @@ const AdminBranchesService = {
 
     // Perform the deletion
     return await AdminBranchesModel.deleteById(branchId);
+  },
+
+  updateStatus: async (branchId, statusParam) => {
+    // Get a dedicated client from the pool for the transaction
+    const client = await db.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      const branch = await AdminBranchesModel.findById(branchId);
+      if (!branch) {
+        throw new Error("Branch not found");
+      }
+
+      // Convert string 'Open'/'Closed' to Boolean for the 'branches' table
+      const isOpenBool = statusParam.toLowerCase() === "open";
+
+      // Update the branch status
+      const updatedStatusBranch = await AdminBranchesModel.updateStatus(
+        client,
+        branchId,
+        isOpenBool,
+      );
+
+      // Convert Boolean to Uppercase String 'OPEN'/'CLOSED' for the logs
+      const logStatus = isOpenBool ? "OPEN" : "CLOSED";
+
+      await AdminBranchesModel.createStatusLogs(client, branchId, logStatus);
+
+      await client.query("COMMIT");
+      return updatedStatusBranch;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   },
 };
 
