@@ -14,7 +14,8 @@ const AdminAuthController = {
 
       const admin = await AdminAuthService.login(email, password);
 
-      generateTokenAndSetCookies(res, admin.admin_id);
+      const role = "admin";
+      generateTokenAndSetCookies(res, admin.admin_id, role);
 
       return res.status(200).json({
         success: true,
@@ -42,7 +43,8 @@ const AdminAuthController = {
 
   me: async (req, res) => {
     try {
-      return res.status(200).json({ success: true, admin: req.admin });
+      const admin = await AdminAuthService.me(req.authUser.id);
+      return res.status(200).json({ success: true, admin });
     } catch (error) {
       return res.status(401).json({ success: false, message: error.message });
     }

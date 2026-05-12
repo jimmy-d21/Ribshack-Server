@@ -17,6 +17,14 @@ const AdminAuthService = {
     delete admin.password;
     return admin;
   },
+  me: async (adminId) => {
+    const admin = await AdminAuthModel.findById(adminId);
+    if (!admin) {
+      throw new Error("Admin not found");
+    }
+
+    return admin;
+  },
 };
 
 export default AdminAuthService;

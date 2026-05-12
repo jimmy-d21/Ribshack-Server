@@ -1,13 +1,15 @@
 import jwt from "jsonwebtoken";
 import ENV from "./env.js";
 
-const generateTokenAndSetCookies = (res, currentId) => {
+const generateTokenAndSetCookies = (res, currentId, role) => {
   if (!currentId) {
     console.error("Error: currentId is missing for token generation");
     return;
   }
 
-  const token = jwt.sign({ currentId }, ENV.jwt.secret, { expiresIn: "7d" });
+  const token = jwt.sign({ id: currentId, role }, ENV.jwt.secret, {
+    expiresIn: "7d",
+  });
 
   res.cookie("token", token, {
     httpOnly: true,

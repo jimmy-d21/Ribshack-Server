@@ -3,6 +3,7 @@ import cookieParser from "cookie-parser";
 import ENV from "./utils/env.js";
 import { checkConnection } from "./config/db.js";
 import adminRoutes from "./routes/admin.route.js";
+import { errorHandler, notFound } from "./middlewares/error.middleware.js";
 
 const app = express();
 const PORT = ENV.server.port || 5000;
@@ -16,6 +17,9 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/v1/admin", adminRoutes);
+
+app.use(notFound);
+app.use(errorHandler);
 
 const startServer = async () => {
   await checkConnection();
