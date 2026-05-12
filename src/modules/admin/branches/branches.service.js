@@ -34,6 +34,10 @@ const AdminBranchesService = {
       throw new Error("Username is already taken");
     }
 
+    if (password.length < 6) {
+      throw new Error("Password must be at least 6 characters");
+    }
+
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
 
@@ -49,6 +53,53 @@ const AdminBranchesService = {
     });
 
     return newBranch;
+  },
+
+  update: async (branchId, branchData) => {
+    const {
+      branch_name,
+      full_address,
+      city,
+      is_open,
+      manager_name,
+      contact_number,
+      username,
+      password,
+    } = branchData;
+
+    // Check if branch exists
+    const existingBranch = await AdminBranchesModel.findById(branchId);
+    if (!existingBranch) throw new Error("Branch not found");
+
+    // If username is being changed, check it's not taken by another branch
+    if (username && username !== existingBranch.username) {
+      const takenUsername = await AdminBranchesModel.findByUsername(username);
+      if (takenUsername) throw new Error("Username is already taken");
+    }
+
+    // Hash password only if a new one is provided
+    let password_hash = null;
+    if (password && password.trim()) {
+      if (password.length < 6) {
+        throw new Error("Password must be at least 6 characters");
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      password_hash = await bcrypt.hash(password, salt);
+    }
+
+    const updatedBranch = await AdminBranchesModel.update(branchId, {
+      branch_name: branch_name || existingBranch.branch_name,
+      full_address: full_address || existingBranch.full_address,
+      city: city || existingBranch.city,
+      is_open: is_open ?? existingBranch.is_open,
+      manager_name: manager_name || existingBranch.manager_name,
+      contact_number: contact_number || existingBranch.contact_number,
+      username: username || existingBranch.username,
+      password_hash: password_hash,
+    });
+
+    return updatedBranch;
   },
 };
 

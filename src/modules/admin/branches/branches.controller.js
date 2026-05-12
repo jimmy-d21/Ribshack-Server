@@ -78,6 +78,41 @@ const AdminBranchesController = {
       return res.status(500).json({ success: false, message: error.message });
     }
   },
+
+  updateBranch: async (req, res) => {
+    try {
+      const { branchId } = req.params;
+      const {
+        branch_name,
+        full_address,
+        city,
+        is_open,
+        manager_name,
+        contact_number,
+        username,
+        password,
+      } = req.body;
+
+      const updatedBranch = await AdminBranchesService.update(branchId, {
+        branch_name,
+        full_address,
+        city,
+        is_open,
+        manager_name,
+        contact_number,
+        username,
+        password,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Branch updated successfully",
+        branch: updatedBranch,
+      });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  },
 };
 
 export default AdminBranchesController;
