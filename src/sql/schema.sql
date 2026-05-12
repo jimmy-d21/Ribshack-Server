@@ -110,3 +110,49 @@ CREATE TABLE staff_attendance (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Master List of Items (Global Catalog)
+CREATE TABLE inventory_items (
+    item_id           SERIAL PRIMARY KEY,
+    branch_id         INTEGER NOT NULL REFERENCES branches(branch_id) ON DELETE CASCADE,
+    item_name         VARCHAR(100) NOT NULL,
+    item_type         VARCHAR(50), -- e.g., 'Meat', 'Ingredient' (from your UI)
+    unit_of_measure   VARCHAR(30), -- e.g., 'kg', 'bottles'
+    current_quantity  NUMERIC(10,2) DEFAULT 0,
+    reorder_threshold NUMERIC(10,2) DEFAULT 0, -- Min Threshold
+    max_threshold     NUMERIC(10,2),           -- Added from your Figma design
+    is_active         BOOLEAN DEFAULT TRUE,
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Restock Request Header (The "Card" in your Request Center)
+CREATE TABLE inventory_requests (
+    request_id     SERIAL PRIMARY KEY,
+    branch_id      INTEGER NOT NULL REFERENCES branches(branch_id) ON DELETE CASCADE,
+    requested_by   INTEGER NOT NULL REFERENCES staffs(staff_id),
+    priority_level VARCHAR(20) NOT NULL DEFAULT 'MEDIUM' 
+                   CHECK (priority_level IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')), -- Added 'CRITICAL' from your screenshot
+    status         VARCHAR(20) NOT NULL DEFAULT 'PENDING'
+                   CHECK (status IN ('PENDING', 'APPROVED', 'DECLINED')),
+    branch_notes   TEXT, -- "Running low on ribs. Weekend rush expected"
+    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Restock Request Line Items (The list of items inside the modal)
+CREATE TABLE inventory_request_items (
+    request_item_id    SERIAL PRIMARY KEY,
+    request_id         INTEGER NOT NULL REFERENCES inventory_requests(request_id) ON DELETE CASCADE,
+    item_id            INTEGER REFERENCES inventory_items(item_id), -- Linked to the master item
+    quantity_requested NUMERIC(10,2) NOT NULL,
+    notes              TEXT
+);
+
+-- Status Logs (For the "Reason for Declining" or "Delivery Notes" modals)
+CREATE TABLE inventory_request_status_logs (
+    status_log_id SERIAL PRIMARY KEY,
+    request_id    INTEGER NOT NULL REFERENCES inventory_requests(request_id) ON DELETE CASCADE,
+    status        VARCHAR(20) NOT NULL,
+    actioned_by   INTEGER REFERENCES admins(admin_id),
+    actioned_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    remarks       TEXT -- This stores "Supplier out of stock" or "Scheduled for 10AM"
+);
