@@ -8,12 +8,33 @@ const AdminInventoryRequestController = {
       const inventoryRequests =
         await AdminInventoryRequestService.getAllInventoryRequests(status);
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         inventoryRequests,
       });
     } catch (error) {
-      console.error("Controller Error:", error);
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  },
+
+  approveRequest: async (req, res) => {
+    try {
+      const { requestId } = req.params;
+      const { remarks } = req.body;
+      const adminId = req.authUser.id;
+
+      const updatedRequest = await AdminInventoryRequestService.approveRequest(
+        requestId,
+        remarks,
+        adminId,
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Inventory request approved successfully",
+        data: updatedRequest,
+      });
+    } catch (error) {
       return res.status(500).json({ success: false, message: error.message });
     }
   },
