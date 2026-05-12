@@ -1,12 +1,19 @@
 import express from "express";
 import ENV from "./utils/env.js";
 import { checkConnection } from "./config/db.js";
+import adminRoutes from "./routes/admin.route.js";
 
 const app = express();
 const PORT = ENV.server.port || 5000;
 
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));
+
+app.get("/", (req, res) => {
+  res.send(`Server is ready for RIBSHACK SYSTEM`);
+});
+
+app.use("/api/v1/admin", adminRoutes);
 
 const startServer = async () => {
   await checkConnection();
