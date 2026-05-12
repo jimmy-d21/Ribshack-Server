@@ -7,6 +7,14 @@ class AdminAuthModel {
     ]);
     return rows[0];
   }
+
+  static async findById(id) {
+    const { rows } = await db.query(
+      `SELECT * FROM admins WHERE admin_id = $1`,
+      [id],
+    );
+    return rows[0];
+  }
 }
 
 export default AdminAuthModel;

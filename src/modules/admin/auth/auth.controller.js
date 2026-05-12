@@ -1,3 +1,4 @@
+import generateTokenAndSetCookies from "../../../utils/generateTokenAndSetCookies.js";
 import AdminAuthService from "./auth.service.js";
 
 const AdminAuthController = {
@@ -13,9 +14,37 @@ const AdminAuthController = {
 
       const admin = await AdminAuthService.login(email, password);
 
-      res.status(200).json({ message: "Login successfully", admin });
+      generateTokenAndSetCookies(res, admin.admin_id);
+
+      return res.status(200).json({
+        success: true,
+        message: "Login successfully",
+        admin,
+      });
     } catch (error) {
-      return res.status(401).json({ message: error.message });
+      return res.status(401).json({ success: false, message: error.message });
+    }
+  },
+
+  logout: async (req, res) => {
+    try {
+      res.cookie("token", "", {
+        httpOnly: true,
+        expires: new Date(0),
+      });
+      return res
+        .status(200)
+        .json({ success: true, message: "Logout successfully" });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  },
+
+  me: async (req, res) => {
+    try {
+      return res.status(200).json({ success: true, admin: req.admin });
+    } catch (error) {
+      return res.status(401).json({ success: false, message: error.message });
     }
   },
 };
