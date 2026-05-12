@@ -9,6 +9,15 @@ const AdminBranchesService = {
     return branches;
   },
 
+  getBranchDetailes: async (branchId) => {
+    const branch = await AdminBranchesModel.findById(branchId);
+    if (!branch) {
+      throw new Error("Branch not found");
+    }
+
+    return branch;
+  },
+
   create: async (branchData) => {
     const {
       branch_name,

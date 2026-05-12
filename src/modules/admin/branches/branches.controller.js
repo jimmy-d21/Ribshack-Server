@@ -11,6 +11,21 @@ const AdminBranchesController = {
     }
   },
 
+  getBranchDetails: async (req, res) => {
+    try {
+      const { branchId } = req.params;
+      if (!branchId) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Branch ID is required" });
+      }
+      const branch = await AdminBranchesService.getBranchDetailes(branchId);
+      return res.status(200).json(branch);
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  },
+
   // Todo: Add branch_status_logs
   addBranch: async (req, res) => {
     try {
@@ -94,6 +109,12 @@ const AdminBranchesController = {
         username,
         password,
       } = req.body;
+
+      if (!branchId) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Branch ID is required" });
+      }
 
       const updatedBranch = await AdminBranchesService.update(branchId, {
         branch_name,
