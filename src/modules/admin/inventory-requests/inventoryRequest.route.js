@@ -8,5 +8,9 @@ router.put(
   "/:requestId/approve",
   AdminInventoryRequestController.approveRequest,
 );
+router.put(
+  "/:requestId/decline",
+  AdminInventoryRequestController.declinedRequest,
+);
 
 export default router;
