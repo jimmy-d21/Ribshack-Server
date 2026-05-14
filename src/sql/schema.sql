@@ -156,3 +156,67 @@ CREATE TABLE inventory_request_status_logs (
     actioned_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     remarks       TEXT -- This stores "Supplier out of stock" or "Scheduled for 10AM"
 );
+
+-- Defines product categories displayed in the menu
+CREATE TABLE product_categories (
+    category_id SERIAL PRIMARY KEY,
+    category_name VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT,
+    display_order INT DEFAULT 0,
+    is_active     BOOLEAN DEFAULT TRUE,
+    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Global product catalog managed by HQ — single source of truth
+CREATE TABLE products (
+    product_id   SERIAL PRIMARY KEY,
+    product_name VARCHAR(100) NOT NULL,
+    description  TEXT,
+    base_price   NUMERIC(10,2) NOT NULL,
+    category_id  INTEGER NOT NULL REFERENCES product_categories(category_id),
+    has_unli_rice BOOLEAN DEFAULT FALSE,
+    is_active    BOOLEAN DEFAULT TRUE,
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Stores image references for each product in the global catalog
+CREATE TABLE product_images (
+    image_id    SERIAL PRIMARY KEY,
+    product_id  INTEGER NOT NULL REFERENCES products(product_id) ON DELETE CASCADE,
+    image_url   TEXT NOT NULL,
+    is_primary  BOOLEAN DEFAULT FALSE,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Stores available add-ons per product (extra rice, drinks, sauces)
+CREATE TABLE product_addons (
+    addon_id         SERIAL PRIMARY KEY,
+    product_id       INTEGER NOT NULL REFERENCES products(product_id) ON DELETE CASCADE,
+    addon_name       VARCHAR(100) NOT NULL,
+    additional_price NUMERIC(10,2) NOT NULL DEFAULT 0.00,
+    is_active        BOOLEAN DEFAULT TRUE,
+    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tracks which products are available or marked sold out per branch
+CREATE TABLE branch_product_availability (
+    availability_id   SERIAL PRIMARY KEY,
+    branch_id         INTEGER NOT NULL REFERENCES branches(branch_id) ON DELETE CASCADE,
+    product_id        INTEGER NOT NULL REFERENCES products(product_id) ON DELETE CASCADE,
+    is_available      BOOLEAN DEFAULT TRUE,
+    marked_sold_out_at TIMESTAMP,
+    updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (branch_id, product_id)
+);
+
+-- Links products to branches with optional branch-level pricing overrides
+CREATE TABLE branch_menu (
+    branch_menu_id SERIAL PRIMARY KEY,
+    branch_id      INTEGER NOT NULL REFERENCES branches(branch_id) ON DELETE CASCADE,
+    product_id     INTEGER NOT NULL REFERENCES products(product_id) ON DELETE CASCADE,
+    price_override NUMERIC(10,2),
+    is_visible     BOOLEAN DEFAULT TRUE,
+    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (branch_id, product_id)
+);
