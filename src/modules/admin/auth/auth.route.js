@@ -9,6 +9,6 @@ const router = express.Router();
 
 router.get("/me", verifyToken, authorizeRoles("admin"), controller.me);
 router.post("/login", validate.login, controller.login);
-router.post("/logout", verifyToken, controller.logout);
+router.post("/logout", verifyToken, authorizeRoles("admin"), controller.logout);
 
 export default router;
