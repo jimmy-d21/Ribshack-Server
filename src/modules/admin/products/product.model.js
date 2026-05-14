@@ -206,6 +206,14 @@ class AdminProductModel {
 
     return rows[0];
   }
+
+  async createBranchProduct(client, branchId, productId) {
+    const sql = `INSERT INTO branch_menu
+                 (branch_id, product_id)
+                 VALUES($1, $2) RETURNING *`;
+    const { rows } = await client.query(sql, [branchId, productId]);
+    return rows[0];
+  }
 }
 
 export const adminProductModel = new AdminProductModel();

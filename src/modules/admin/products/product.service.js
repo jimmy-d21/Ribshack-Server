@@ -1,5 +1,6 @@
 import cloudinary from "../../../config/cloudinary.js";
 import db from "../../../config/db.js";
+import { adminBranchesModel as brancModel } from "../branches/branches.model.js";
 import { adminProductModel as model } from "./product.model.js";
 
 export const AdminProductServices = {
@@ -25,6 +26,8 @@ export const AdminProductServices = {
         category,
       } = productData;
 
+      const branches = await brancModel.findAll();
+
       let categoryRow = await model.findCategoryByName(client, category);
 
       if (!categoryRow) {
@@ -39,6 +42,14 @@ export const AdminProductServices = {
         unliRice,
         available,
       });
+
+      for (const branch of branches) {
+        await model.createBranchProduct(
+          client,
+          branch.id,
+          newProduct.product_id,
+        );
+      }
 
       if (image) {
         const uploadedImage = await cloudinary.uploader.upload(image);
