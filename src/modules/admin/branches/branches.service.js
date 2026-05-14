@@ -17,16 +17,8 @@ export const AdminBranchesService = {
   },
 
   createBranch: async (branchData) => {
-    const {
-      branch_name,
-      full_address,
-      city,
-      region,
-      manager_name,
-      contact_number,
-      username,
-      password,
-    } = branchData;
+    const { name, location, city, region, manager, phone, username, password } =
+      branchData;
 
     const existingRegion = await model.findRegionByName(region);
     if (!existingRegion) {
@@ -48,12 +40,12 @@ export const AdminBranchesService = {
     const password_hash = await bcrypt.hash(password, salt);
 
     const newBranch = await model.create({
-      branch_name,
-      full_address,
+      name,
+      location,
       city,
       region_id: existingRegion.region_id,
-      manager_name,
-      contact_number,
+      manager,
+      phone,
       username,
       password_hash,
     });
@@ -62,16 +54,8 @@ export const AdminBranchesService = {
   },
 
   updateBranch: async (branchId, branchData) => {
-    const {
-      branch_name,
-      full_address,
-      city,
-      is_open,
-      manager_name,
-      contact_number,
-      username,
-      password,
-    } = branchData;
+    const { name, location, city, status, manager, phone, username, password } =
+      branchData;
 
     const existingBranch = await model.findById(branchId);
     if (!existingBranch) {
@@ -95,12 +79,12 @@ export const AdminBranchesService = {
     }
 
     const updatedBranch = await model.update(branchId, {
-      branch_name: branch_name || existingBranch.branch_name,
-      full_address: full_address || existingBranch.full_address,
+      name: name || existingBranch.name,
+      location: location || existingBranch.location,
       city: city || existingBranch.city,
-      is_open: is_open ?? existingBranch.is_open,
-      manager_name: manager_name || existingBranch.manager_name,
-      contact_number: contact_number || existingBranch.contact_number,
+      status: status ?? existingBranch.status,
+      manager: manager || existingBranch.manager,
+      phone: phone || existingBranch.phone,
       username: username || existingBranch.username,
       password_hash,
     });

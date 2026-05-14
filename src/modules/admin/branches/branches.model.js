@@ -1,19 +1,20 @@
 import db from "../../../config/db.js";
 
 class AdminBranchesModel {
+  // Todo: get the dailyRevenue, orders
   async findAll() {
     const sql = `
       SELECT
-        b.branch_id,
-        b.branch_name,
-        b.full_address,
+        b.branch_id AS id,
+        b.branch_name AS name,
+        b.full_address AS location,
         b.city,
         br.region_id,
-        br.region_name,
-        b.manager_name,
-        b.contact_number,
+        br.region_name AS region,
+        b.manager_name AS manager,
+        b.contact_number AS phone,
         b.username,
-        b.is_open,
+        b.is_open AS status,
         b.created_at
       FROM branches b
       JOIN branches_regions br ON b.region_id = br.region_id
@@ -41,12 +42,12 @@ class AdminBranchesModel {
 
   async create(branchData) {
     const {
-      branch_name,
-      full_address,
+      name,
+      location,
       city,
       region_id,
-      manager_name,
-      contact_number,
+      manager,
+      phone,
       username,
       password_hash,
     } = branchData;
@@ -62,12 +63,12 @@ class AdminBranchesModel {
     `;
 
     const { rows } = await db.query(sql, [
-      branch_name,
-      full_address,
+      name,
+      location,
       city,
       region_id,
-      manager_name,
-      contact_number,
+      manager,
+      phone,
       username,
       password_hash,
     ]);
@@ -78,17 +79,16 @@ class AdminBranchesModel {
   async findById(branchId) {
     const sql = `
       SELECT
-        b.branch_id,
-        b.branch_name,
-        b.full_address,
+        b.branch_id AS id,
+        b.branch_name AS name,
+        b.full_address AS location,
         b.city,
         br.region_id,
-        br.region_name,
-        b.manager_name,
-        b.contact_number,
+        br.region_name AS region,
+        b.manager_name AS manager,
+        b.contact_number AS phone,
         b.username,
-        b.password_hash,
-        b.is_open,
+        b.is_open AS status,
         b.created_at
       FROM branches b
       JOIN branches_regions br ON b.region_id = br.region_id
@@ -100,12 +100,12 @@ class AdminBranchesModel {
 
   async update(branchId, branchData) {
     const {
-      branch_name,
-      full_address,
+      name,
+      location,
       city,
-      is_open,
-      manager_name,
-      contact_number,
+      status,
+      manager,
+      phone,
       username,
       password_hash,
     } = branchData;
@@ -129,12 +129,12 @@ class AdminBranchesModel {
           is_open, manager_name, contact_number, username, updated_at
       `;
       const { rows } = await db.query(sql, [
-        branch_name,
-        full_address,
+        name,
+        location,
         city,
-        is_open,
-        manager_name,
-        contact_number,
+        status,
+        manager,
+        phone,
         username,
         password_hash,
         branchId,
@@ -158,12 +158,12 @@ class AdminBranchesModel {
           is_open, manager_name, contact_number, username, updated_at
       `;
       const { rows } = await db.query(sql, [
-        branch_name,
-        full_address,
+        name,
+        location,
         city,
-        is_open,
-        manager_name,
-        contact_number,
+        status,
+        manager,
+        phone,
         username,
         branchId,
       ]);
