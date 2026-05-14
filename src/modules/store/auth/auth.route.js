@@ -7,6 +7,7 @@ import verifyToken, {
 
 const router = express.Router();
 
+router.get("/me", verifyToken, authorizeRoles("branch"), controller.me);
 router.post("/login", validate.login, controller.login);
 router.post(
   "/logout",

@@ -32,4 +32,13 @@ export const StoreAuthController = {
       return res.status(500).json({ success: false, message: error.message });
     }
   },
+
+  me: async (req, res) => {
+    try {
+      const branch = await service.me(req.authUser.id);
+      return res.status(200).json({ success: true, branch });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  },
 };

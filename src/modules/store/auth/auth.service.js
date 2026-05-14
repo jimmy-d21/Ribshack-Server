@@ -8,12 +8,22 @@ export const StoreAuthService = {
       throw new Error("Invalid credentials");
     }
 
-    const isMatch = await bcrypt.compare(password, branch.password_hash);
+    const isMatch = await bcrypt.compare(password, branch.password);
     if (!isMatch) {
       throw new Error("Invalid credentials");
     }
 
-    delete branch.password_hash;
+    delete branch.password;
+    return branch;
+  },
+
+  me: async (branchId) => {
+    const branch = await model.findById(branchId);
+    if (!branch) {
+      throw new Error("Invalid credentials");
+    }
+
+    delete branch.password;
     return branch;
   },
 };
