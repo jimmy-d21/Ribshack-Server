@@ -51,4 +51,30 @@ export const AdminProductController = {
       });
     }
   },
+
+  updateProduct: async (req, res) => {
+    try {
+      const { productId } = req.params;
+      const {
+        name,
+        category,
+        price,
+        description,
+        unliRice,
+        available,
+        image,
+        addOns,
+      } = req.body;
+      const updatedProduct = await service.updateProduct(productId, req.body);
+
+      return res
+        .status(200)
+        .json({ message: "Product updated successfully!", updatedProduct });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  },
 };

@@ -121,6 +121,7 @@ class AdminProductModel {
         p.product_id AS id,
         p.product_name AS name,
         pc.category_name AS category,
+        p.category_id AS category_id,
         p.base_price AS price,
         p.description,
         p.has_unli_rice AS "unliRice",
@@ -152,6 +153,36 @@ class AdminProductModel {
     const { rows } = await client.query(sql, [productId]);
 
     return rows[0];
+  }
+
+  async update(client, productId, data) {
+    const sql = `UPDATE products 
+                 SET product_name = $1, base_price = $2, description = $3, 
+                     category_id = $4, has_unli_rice = $5, is_active = $6, 
+                     updated_at = CURRENT_TIMESTAMP
+                 WHERE product_id = $7 RETURNING *`;
+    const values = [
+      data.name,
+      data.price,
+      data.description,
+      data.categoryId,
+      data.unliRice,
+      data.available,
+      productId,
+    ];
+    const { rows } = await client.query(sql, values);
+    return rows[0];
+  }
+
+  async updateImage(client, productId, imageUrl) {
+    const sql = `UPDATE product_images SET image_url = $1 WHERE product_id = $2 AND is_primary = TRUE`;
+    await client.query(sql, [imageUrl, productId]);
+  }
+
+  async deleteAllAddOns(client, productId) {
+    await client.query("DELETE FROM product_addons WHERE product_id = $1", [
+      productId,
+    ]);
   }
 }
 
