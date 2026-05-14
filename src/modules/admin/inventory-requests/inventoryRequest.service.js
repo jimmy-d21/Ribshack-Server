@@ -1,23 +1,20 @@
 import db from "../../../config/db.js";
-import AdminInventoryRequestModel from "./inventoryRequest.model.js";
+import { adminInventoryRequestModel as model } from "./inventoryRequest.model.js";
 
-const AdminInventoryRequestService = {
-  getAllInventoryRequests: async (status = null) => {
-    const inventoryRequests = await AdminInventoryRequestModel.findAll(status);
+export const AdminInventoryRequestService = {
+  getAllRequests: async (status = null) => {
+    const inventoryRequests = await model.findAll(status);
     return inventoryRequests;
   },
 
-  approveRequest: async (requestId, remarks, adminId) => {
-    const status = "APPROVED";
+  updateRequestStatus: async (requestId, remarks, adminId, status) => {
     const client = await db.connect();
 
     try {
       await client.query("BEGIN");
 
-      const request = await AdminInventoryRequestModel.findById(
-        client,
-        requestId,
-      );
+      const request = await model.findById(client, requestId);
+
       if (!request) {
         throw new Error("Inventory request not found");
       }
@@ -28,19 +25,9 @@ const AdminInventoryRequestService = {
         );
       }
 
-      await AdminInventoryRequestModel.createStatusLogs(
-        client,
-        requestId,
-        status,
-        adminId,
-        remarks,
-      );
+      await model.createStatusLogs(client, requestId, status, adminId, remarks);
 
-      const result = await AdminInventoryRequestModel.updateStatus(
-        client,
-        requestId,
-        status,
-      );
+      const result = await model.updateStatus(client, requestId, status);
 
       await client.query("COMMIT");
       return result;
@@ -52,50 +39,21 @@ const AdminInventoryRequestService = {
     }
   },
 
-  declinedRequest: async (requestId, remarks, adminId) => {
-    const status = "DECLINED";
-    const client = await db.connect();
+  approveRequest: async (requestId, remarks, adminId) => {
+    return AdminInventoryRequestService.updateRequestStatus(
+      requestId,
+      remarks,
+      adminId,
+      "APPROVED",
+    );
+  },
 
-    try {
-      await client.query("BEGIN");
-
-      const request = await AdminInventoryRequestModel.findById(
-        client,
-        requestId,
-      );
-      if (!request) {
-        throw new Error("Inventory request not found");
-      }
-
-      if (request.status === "APPROVED" || request.status === "DECLINED") {
-        throw new Error(
-          `This request cannot be updated because it has already been ${request.status.toLowerCase()}.`,
-        );
-      }
-
-      await AdminInventoryRequestModel.createStatusLogs(
-        client,
-        requestId,
-        status,
-        adminId,
-        remarks,
-      );
-
-      const result = await AdminInventoryRequestModel.updateStatus(
-        client,
-        requestId,
-        status,
-      );
-
-      await client.query("COMMIT");
-      return result;
-    } catch (error) {
-      await client.query("ROLLBACK");
-      throw error;
-    } finally {
-      client.release();
-    }
+  declineRequest: async (requestId, remarks, adminId) => {
+    return AdminInventoryRequestService.updateRequestStatus(
+      requestId,
+      remarks,
+      adminId,
+      "DECLINED",
+    );
   },
 };
-
-export default AdminInventoryRequestService;

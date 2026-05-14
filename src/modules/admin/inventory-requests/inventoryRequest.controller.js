@@ -1,12 +1,11 @@
-import AdminInventoryRequestService from "./inventoryRequest.service.js";
+import { AdminInventoryRequestService as service } from "./inventoryRequest.service.js";
 
-const AdminInventoryRequestController = {
-  getAllInventoryRequests: async (req, res) => {
+export const AdminInventoryRequestController = {
+  getAllRequests: async (req, res) => {
     try {
       const { status } = req.query;
 
-      const inventoryRequests =
-        await AdminInventoryRequestService.getAllInventoryRequests(status);
+      const inventoryRequests = await service.getAllRequests(status);
 
       return res.status(200).json({
         success: true,
@@ -23,7 +22,7 @@ const AdminInventoryRequestController = {
       const { remarks } = req.body;
       const adminId = req.authUser.id;
 
-      const updatedRequest = await AdminInventoryRequestService.approveRequest(
+      const updatedRequest = await service.approveRequest(
         requestId,
         remarks,
         adminId,
@@ -39,13 +38,13 @@ const AdminInventoryRequestController = {
     }
   },
 
-  declinedRequest: async (req, res) => {
+  declineRequest: async (req, res) => {
     try {
       const { requestId } = req.params;
       const { remarks } = req.body;
       const adminId = req.authUser.id;
 
-      const updatedRequest = await AdminInventoryRequestService.declinedRequest(
+      const updatedRequest = await service.declineRequest(
         requestId,
         remarks,
         adminId,
@@ -61,5 +60,3 @@ const AdminInventoryRequestController = {
     }
   },
 };
-
-export default AdminInventoryRequestController;

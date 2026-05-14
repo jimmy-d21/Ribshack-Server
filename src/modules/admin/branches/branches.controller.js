@@ -1,10 +1,9 @@
-// branches.controller.js
-import AdminBranchesService from "./branches.service.js";
+import { AdminBranchesService as service } from "./branches.service.js";
 
-const AdminBranchesController = {
+export const AdminBranchesController = {
   getAllBranches: async (req, res) => {
     try {
-      const branches = await AdminBranchesService.getAllBranches();
+      const branches = await service.getAllBranches();
       return res.status(200).json({ success: true, branches });
     } catch (error) {
       return res.status(500).json({ success: false, message: error.message });
@@ -14,67 +13,27 @@ const AdminBranchesController = {
   getBranchDetails: async (req, res) => {
     try {
       const { branchId } = req.params;
-      if (!branchId) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Branch ID is required" });
-      }
-      const branch = await AdminBranchesService.getBranchDetailes(branchId);
-      return res.status(200).json(branch);
+      const branch = await service.getBranchDetails(branchId);
+      return res.status(200).json({ success: true, branch });
     } catch (error) {
       return res.status(500).json({ success: false, message: error.message });
     }
   },
 
-  // Todo: Add branch_status_logs
-  addBranch: async (req, res) => {
+  createBranch: async (req, res) => {
     try {
       const {
         branch_name,
         full_address,
         city,
-        region, // e.g. "Visayas", "Luzon", "Mindanao"
+        region,
         manager_name,
         contact_number,
         username,
         password,
       } = req.body;
 
-      // Check for missing fields
-      if (
-        !branch_name ||
-        !full_address ||
-        !city ||
-        !region ||
-        !manager_name ||
-        !contact_number ||
-        !username ||
-        !password
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "Please provide all required fields including credentials",
-        });
-      }
-
-      // Check for empty strings
-      if (
-        !branch_name.trim() ||
-        !full_address.trim() ||
-        !city.trim() ||
-        !region.trim() ||
-        !manager_name.trim() ||
-        !contact_number.trim() ||
-        !username.trim() ||
-        !password.trim()
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "Fields cannot be empty or whitespace",
-        });
-      }
-
-      const newBranch = await AdminBranchesService.create({
+      const newBranch = await service.createBranch({
         branch_name: branch_name.trim(),
         full_address: full_address.trim(),
         city: city.trim(),
@@ -95,7 +54,6 @@ const AdminBranchesController = {
     }
   },
 
-  // Todo: Add branch_status_logs
   updateBranch: async (req, res) => {
     try {
       const { branchId } = req.params;
@@ -110,13 +68,7 @@ const AdminBranchesController = {
         password,
       } = req.body;
 
-      if (!branchId) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Branch ID is required" });
-      }
-
-      const updatedBranch = await AdminBranchesService.update(branchId, {
+      const updatedBranch = await service.updateBranch(branchId, {
         branch_name,
         full_address,
         city,
@@ -140,15 +92,7 @@ const AdminBranchesController = {
   deleteBranch: async (req, res) => {
     try {
       const { branchId } = req.params;
-
-      if (!branchId) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Branch ID is required" });
-      }
-
-      await AdminBranchesService.delete(branchId);
-
+      await service.deleteBranch(branchId);
       return res.status(200).json({
         success: true,
         message: "Branch deleted successfully",
@@ -158,21 +102,11 @@ const AdminBranchesController = {
     }
   },
 
-  updateStatus: async (req, res) => {
+  updateBranchStatus: async (req, res) => {
     try {
       const { branchId, status } = req.params;
 
-      if (!branchId || !status) {
-        return res.status(400).json({
-          success: false,
-          message: "Branch ID and Status are required",
-        });
-      }
-
-      const updatedBranch = await AdminBranchesService.updateStatus(
-        branchId,
-        status,
-      );
+      const updatedBranch = await service.updateBranchStatus(branchId, status);
 
       return res.status(200).json({
         success: true,
@@ -184,5 +118,3 @@ const AdminBranchesController = {
     }
   },
 };
-
-export default AdminBranchesController;

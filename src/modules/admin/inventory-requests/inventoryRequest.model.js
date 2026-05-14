@@ -1,7 +1,7 @@
 import db from "../../../config/db.js";
 
 class AdminInventoryRequestModel {
-  static async findAll(status = null) {
+  async findAll(status = null) {
     let sql = `SELECT 
                     ir.request_id,
                     ir.priority_level,
@@ -25,6 +25,7 @@ class AdminInventoryRequestModel {
                 JOIN branches b ON ir.branch_id = b.branch_id
                 `;
     const params = [];
+
     if (status) {
       sql += ` WHERE ir.status = $1`;
       params.push(status.toUpperCase());
@@ -35,7 +36,7 @@ class AdminInventoryRequestModel {
     return rows;
   }
 
-  static async findById(client = db, requestId) {
+  async findById(client = db, requestId) {
     const sql = `SELECT 
                     ir.request_id,
                     ir.priority_level,
@@ -62,7 +63,7 @@ class AdminInventoryRequestModel {
     return rows[0];
   }
 
-  static async createStatusLogs(client, requestId, status, adminId, remarks) {
+  async createStatusLogs(client, requestId, status, adminId, remarks) {
     const sql = `
       INSERT INTO inventory_request_status_logs (request_id, status, actioned_by, remarks)
       VALUES ($1, $2, $3, $4)
@@ -76,7 +77,7 @@ class AdminInventoryRequestModel {
     return rows[0];
   }
 
-  static async updateStatus(client, requestId, status) {
+  async updateStatus(client, requestId, status) {
     await client.query(
       "UPDATE inventory_requests SET status = $1 WHERE request_id = $2",
       [status, requestId],
@@ -111,4 +112,4 @@ class AdminInventoryRequestModel {
   }
 }
 
-export default AdminInventoryRequestModel;
+export const adminInventoryRequestModel = new AdminInventoryRequestModel();

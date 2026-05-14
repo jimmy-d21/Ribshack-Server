@@ -1,24 +1,22 @@
-// branches.service.js
 import bcrypt from "bcryptjs";
-import AdminBranchesModel from "./branches.model.js";
 import db from "../../../config/db.js";
+import { adminBranchesModel as model } from "./branches.model.js";
 
-const AdminBranchesService = {
+export const AdminBranchesService = {
   getAllBranches: async () => {
-    const branches = await AdminBranchesModel.findAll();
+    const branches = await model.findAll();
     return branches;
   },
 
-  getBranchDetailes: async (branchId) => {
-    const branch = await AdminBranchesModel.findById(branchId);
+  getBranchDetails: async (branchId) => {
+    const branch = await model.findById(branchId);
     if (!branch) {
       throw new Error("Branch not found");
     }
-
     return branch;
   },
 
-  create: async (branchData) => {
+  createBranch: async (branchData) => {
     const {
       branch_name,
       full_address,
@@ -30,16 +28,14 @@ const AdminBranchesService = {
       password,
     } = branchData;
 
-    // Look up region by name — must already exist in branches_regions
-    const existingRegion = await AdminBranchesModel.findRegionByName(region);
+    const existingRegion = await model.findRegionByName(region);
     if (!existingRegion) {
       throw new Error(
         `Region "${region}" not found. Valid regions are: Visayas, Luzon, Mindanao`,
       );
     }
 
-    // Check if username is already taken
-    const existingBranch = await AdminBranchesModel.findByUsername(username);
+    const existingBranch = await model.findByUsername(username);
     if (existingBranch) {
       throw new Error("Username is already taken");
     }
@@ -51,7 +47,7 @@ const AdminBranchesService = {
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
 
-    const newBranch = await AdminBranchesModel.create({
+    const newBranch = await model.create({
       branch_name,
       full_address,
       city,
@@ -65,7 +61,7 @@ const AdminBranchesService = {
     return newBranch;
   },
 
-  update: async (branchId, branchData) => {
+  updateBranch: async (branchId, branchData) => {
     const {
       branch_name,
       full_address,
@@ -77,28 +73,28 @@ const AdminBranchesService = {
       password,
     } = branchData;
 
-    // Check if branch exists
-    const existingBranch = await AdminBranchesModel.findById(branchId);
-    if (!existingBranch) throw new Error("Branch not found");
-
-    // If username is being changed, check it's not taken by another branch
-    if (username && username !== existingBranch.username) {
-      const takenUsername = await AdminBranchesModel.findByUsername(username);
-      if (takenUsername) throw new Error("Username is already taken");
+    const existingBranch = await model.findById(branchId);
+    if (!existingBranch) {
+      throw new Error("Branch not found");
     }
 
-    // Hash password only if a new one is provided
+    if (username && username !== existingBranch.username) {
+      const takenUsername = await model.findByUsername(username);
+      if (takenUsername) {
+        throw new Error("Username is already taken");
+      }
+    }
+
     let password_hash = null;
     if (password && password.trim()) {
       if (password.length < 6) {
         throw new Error("Password must be at least 6 characters");
       }
-
       const salt = await bcrypt.genSalt(10);
       password_hash = await bcrypt.hash(password, salt);
     }
 
-    const updatedBranch = await AdminBranchesModel.update(branchId, {
+    const updatedBranch = await model.update(branchId, {
       branch_name: branch_name || existingBranch.branch_name,
       full_address: full_address || existingBranch.full_address,
       city: city || existingBranch.city,
@@ -106,52 +102,44 @@ const AdminBranchesService = {
       manager_name: manager_name || existingBranch.manager_name,
       contact_number: contact_number || existingBranch.contact_number,
       username: username || existingBranch.username,
-      password_hash: password_hash,
+      password_hash,
     });
 
     return updatedBranch;
   },
 
-  delete: async (branchId) => {
-    // Check if it exists
-    const branch = await AdminBranchesModel.findById(branchId);
+  deleteBranch: async (branchId) => {
+    const branch = await model.findById(branchId);
     if (!branch) {
       throw new Error("Branch not found");
     }
-
-    // Perform the deletion
-    return await AdminBranchesModel.deleteById(branchId);
+    return await model.deleteById(branchId);
   },
 
-  updateStatus: async (branchId, statusParam) => {
-    // Get a dedicated client from the pool for the transaction
+  updateBranchStatus: async (branchId, statusParam) => {
     const client = await db.connect();
 
     try {
       await client.query("BEGIN");
 
-      const branch = await AdminBranchesModel.findById(branchId);
+      const branch = await model.findById(branchId);
       if (!branch) {
         throw new Error("Branch not found");
       }
 
-      // Convert string 'Open'/'Closed' to Boolean for the 'branches' table
       const isOpenBool = statusParam.toLowerCase() === "open";
 
-      // Update the branch status
-      const updatedStatusBranch = await AdminBranchesModel.updateStatus(
+      const updatedBranch = await model.updateStatus(
         client,
         branchId,
         isOpenBool,
       );
 
-      // Convert Boolean to Uppercase String 'OPEN'/'CLOSED' for the logs
       const logStatus = isOpenBool ? "OPEN" : "CLOSED";
-
-      await AdminBranchesModel.createStatusLogs(client, branchId, logStatus);
+      await model.createStatusLogs(client, branchId, logStatus);
 
       await client.query("COMMIT");
-      return updatedStatusBranch;
+      return updatedBranch;
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;
@@ -160,5 +148,3 @@ const AdminBranchesService = {
     }
   },
 };
-
-export default AdminBranchesService;

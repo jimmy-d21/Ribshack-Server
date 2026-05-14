@@ -1,8 +1,7 @@
-// branches.model.js
 import db from "../../../config/db.js";
 
 class AdminBranchesModel {
-  static async findAll() {
+  async findAll() {
     const sql = `
       SELECT
         b.branch_id,
@@ -24,7 +23,7 @@ class AdminBranchesModel {
     return rows;
   }
 
-  static async findRegionByName(region_name) {
+  async findRegionByName(region_name) {
     const { rows } = await db.query(
       "SELECT * FROM branches_regions WHERE LOWER(region_name) = LOWER($1)",
       [region_name],
@@ -32,7 +31,7 @@ class AdminBranchesModel {
     return rows[0] || null;
   }
 
-  static async findByUsername(username) {
+  async findByUsername(username) {
     const { rows } = await db.query(
       "SELECT branch_id FROM branches WHERE username = $1",
       [username],
@@ -40,7 +39,7 @@ class AdminBranchesModel {
     return rows[0] || null;
   }
 
-  static async create(branchData) {
+  async create(branchData) {
     const {
       branch_name,
       full_address,
@@ -76,30 +75,30 @@ class AdminBranchesModel {
     return rows[0];
   }
 
-  static async findById(branchId) {
+  async findById(branchId) {
     const sql = `
-    SELECT
-      b.branch_id,
-      b.branch_name,
-      b.full_address,
-      b.city,
-      br.region_id,
-      br.region_name,
-      b.manager_name,
-      b.contact_number,
-      b.username,
-      b.password_hash,
-      b.is_open,
-      b.created_at
-    FROM branches b
-    JOIN branches_regions br ON b.region_id = br.region_id
-    WHERE b.branch_id = $1
-  `;
+      SELECT
+        b.branch_id,
+        b.branch_name,
+        b.full_address,
+        b.city,
+        br.region_id,
+        br.region_name,
+        b.manager_name,
+        b.contact_number,
+        b.username,
+        b.password_hash,
+        b.is_open,
+        b.created_at
+      FROM branches b
+      JOIN branches_regions br ON b.region_id = br.region_id
+      WHERE b.branch_id = $1
+    `;
     const { rows } = await db.query(sql, [branchId]);
     return rows[0] || null;
   }
 
-  static async update(branchId, branchData) {
+  async update(branchId, branchData) {
     const {
       branch_name,
       full_address,
@@ -113,22 +112,22 @@ class AdminBranchesModel {
 
     if (password_hash) {
       const sql = `
-      UPDATE branches
-      SET
-        branch_name    = $1,
-        full_address   = $2,
-        city           = $3,
-        is_open        = $4,
-        manager_name   = $5,
-        contact_number = $6,
-        username       = $7,
-        password_hash  = $8,
-        updated_at     = CURRENT_TIMESTAMP
-      WHERE branch_id  = $9
-      RETURNING
-        branch_id, branch_name, full_address, city,
-        is_open, manager_name, contact_number, username, updated_at
-    `;
+        UPDATE branches
+        SET
+          branch_name    = $1,
+          full_address   = $2,
+          city           = $3,
+          is_open        = $4,
+          manager_name   = $5,
+          contact_number = $6,
+          username       = $7,
+          password_hash  = $8,
+          updated_at     = CURRENT_TIMESTAMP
+        WHERE branch_id  = $9
+        RETURNING
+          branch_id, branch_name, full_address, city,
+          is_open, manager_name, contact_number, username, updated_at
+      `;
       const { rows } = await db.query(sql, [
         branch_name,
         full_address,
@@ -143,21 +142,21 @@ class AdminBranchesModel {
       return rows[0];
     } else {
       const sql = `
-      UPDATE branches
-      SET
-        branch_name    = $1,
-        full_address   = $2,
-        city           = $3,
-        is_open        = $4,
-        manager_name   = $5,
-        contact_number = $6,
-        username       = $7,
-        updated_at     = CURRENT_TIMESTAMP
-      WHERE branch_id  = $8
-      RETURNING
-        branch_id, branch_name, full_address, city,
-        is_open, manager_name, contact_number, username, updated_at
-    `;
+        UPDATE branches
+        SET
+          branch_name    = $1,
+          full_address   = $2,
+          city           = $3,
+          is_open        = $4,
+          manager_name   = $5,
+          contact_number = $6,
+          username       = $7,
+          updated_at     = CURRENT_TIMESTAMP
+        WHERE branch_id  = $8
+        RETURNING
+          branch_id, branch_name, full_address, city,
+          is_open, manager_name, contact_number, username, updated_at
+      `;
       const { rows } = await db.query(sql, [
         branch_name,
         full_address,
@@ -172,33 +171,33 @@ class AdminBranchesModel {
     }
   }
 
-  static async deleteById(id) {
+  async deleteById(id) {
     const sql = `DELETE FROM branches WHERE branch_id = $1`;
     const result = await db.query(sql, [id]);
     return result.rowCount > 0;
   }
 
-  static async updateStatus(client, branchId, isOpen) {
+  async updateStatus(client, branchId, isOpen) {
     const sql = `
       UPDATE branches
       SET is_open = $1, updated_at = CURRENT_TIMESTAMP
       WHERE branch_id = $2
-      RETURNING 
-        branch_id, branch_name, is_open, manager_name, updated_at;
+      RETURNING
+        branch_id, branch_name, is_open, manager_name, updated_at
     `;
     const { rows } = await client.query(sql, [isOpen, branchId]);
     return rows[0];
   }
 
-  static async createStatusLogs(client, branchId, statusText) {
+  async createStatusLogs(client, branchId, statusText) {
     const sql = `
       INSERT INTO branch_status_logs (branch_id, status)
       VALUES ($1, $2)
-      RETURNING *;
+      RETURNING *
     `;
     const { rows } = await client.query(sql, [branchId, statusText]);
     return rows[0];
   }
 }
 
-export default AdminBranchesModel;
+export const adminBranchesModel = new AdminBranchesModel();

@@ -1,13 +1,22 @@
 import express from "express";
-import AdminBranchesController from "./branches.controller.js";
+import { AdminBranchesController as controller } from "./branches.controller.js";
+import { AdminBranchesValidation as validate } from "./branches.validation.js";
 
 const router = express.Router();
 
-router.get("/", AdminBranchesController.getAllBranches);
-router.get("/:branchId", AdminBranchesController.getBranchDetails);
-router.post("/", AdminBranchesController.addBranch);
-router.put("/:branchId", AdminBranchesController.updateBranch);
-router.delete("/:branchId", AdminBranchesController.deleteBranch);
-router.patch("/:branchId/:status", AdminBranchesController.updateStatus);
+router.get("/", controller.getAllBranches);
+router.get(
+  "/:branchId",
+  validate.getBranchDetails,
+  controller.getBranchDetails,
+);
+router.post("/", validate.createBranch, controller.createBranch);
+router.put("/:branchId", validate.updateBranch, controller.updateBranch);
+router.delete("/:branchId", validate.deleteBranch, controller.deleteBranch);
+router.patch(
+  "/:branchId/status/:status",
+  validate.updateBranchStatus,
+  controller.updateBranchStatus,
+);
 
 export default router;

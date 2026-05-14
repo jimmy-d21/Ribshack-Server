@@ -1,9 +1,8 @@
-import bcrypt from "bcryptjs";
-import AdminAuthModel from "./auth.model.js";
+import { adminAuthModel as model } from "./auth.model.js";
 
-const AdminAuthService = {
+export const AdminAuthService = {
   login: async (email, password) => {
-    const admin = await AdminAuthModel.findByEmail(email);
+    const admin = await model.findByEmail(email);
     if (!admin) {
       throw new Error("Invalid credentials");
     }
@@ -17,8 +16,9 @@ const AdminAuthService = {
     delete admin.password;
     return admin;
   },
+
   me: async (adminId) => {
-    const admin = await AdminAuthModel.findById(adminId);
+    const admin = await model.findById(adminId);
     if (!admin) {
       throw new Error("Admin not found");
     }
@@ -26,5 +26,3 @@ const AdminAuthService = {
     return admin;
   },
 };
-
-export default AdminAuthService;
