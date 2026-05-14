@@ -15,6 +15,11 @@ const ENV = Object.freeze({
   jwt: {
     secret: process.env.JWT_SECRET,
   },
+  cloudinary: {
+    name: process.env.CLOUDINARY_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    secret_key: process.env.CLOUDINARY_SECRECT_KEY,
+  },
 });
 
 export default ENV;

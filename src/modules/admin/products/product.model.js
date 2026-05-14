@@ -1,23 +1,144 @@
 import db from "../../../config/db.js";
 
 class AdminProductModel {
-  // TODO: get the popular using where clause based on order
   async findAll() {
-    const sql = `SELECT
-                    p.product_id        AS id,
-                    p.product_name      AS name,
-                    pc.category_name    AS category,
-                    p.base_price        AS price,
-                    p.description,
-                    p.has_unli_rice     AS "unliRice",
-                    p.is_active         AS available,
-                    pi.image_url        AS image
-                FROM products p
-                JOIN  product_categories pc ON p.category_id  = pc.category_id 
-                LEFT JOIN product_images pi ON p.product_id   = pi.product_id        
-                ORDER BY p.created_at DESC`;
+    const sql = `
+      SELECT
+        p.product_id AS id,
+        p.product_name AS name,
+        pc.category_name AS category,
+        p.base_price AS price,
+        p.description,
+        p.has_unli_rice AS "unliRice",
+        p.is_active AS available,
+        pi.image_url AS image,
+        (
+          SELECT COALESCE(JSON_AGG(JSON_BUILD_OBJECT(
+            'id', pa.addon_id,
+            'name', pa.addon_name,
+            'price', pa.additional_price
+          )), '[]')
+          FROM product_addons pa
+          WHERE pa.product_id = p.product_id
+          AND pa.is_active = TRUE
+        ) AS addons
+      FROM products p
+      JOIN product_categories pc ON p.category_id = pc.category_id
+      LEFT JOIN product_images pi 
+      ON p.product_id = pi.product_id 
+      AND pi.is_primary = TRUE
+      ORDER BY p.created_at DESC
+    `;
+
     const { rows } = await db.query(sql);
     return rows;
+  }
+
+  async findCategoryByName(client, name) {
+    const { rows } = await client.query(
+      `SELECT * FROM product_categories WHERE LOWER(category_name) = LOWER($1)`,
+      [name],
+    );
+
+    return rows[0];
+  }
+
+  async createCategory(client, name) {
+    const { rows } = await client.query(
+      `INSERT INTO product_categories (category_name)
+       VALUES ($1)
+       RETURNING *`,
+      [name],
+    );
+
+    return rows[0];
+  }
+
+  async create(client, data) {
+    const sql = `
+      INSERT INTO products (
+        product_name,
+        base_price,
+        description,
+        category_id,
+        has_unli_rice,
+        is_active
+      )
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *
+    `;
+
+    const values = [
+      data.name,
+      data.price,
+      data.description,
+      data.categoryId,
+      data.unliRice,
+      data.available,
+    ];
+
+    const { rows } = await client.query(sql, values);
+
+    return rows[0];
+  }
+
+  async createImage(client, productId, imageUrl) {
+    const sql = `
+      INSERT INTO product_images (
+        product_id,
+        image_url,
+        is_primary
+      )
+      VALUES ($1, $2, TRUE)
+    `;
+
+    await client.query(sql, [productId, imageUrl]);
+  }
+
+  async createAddOns(client, productId, addonName, additionalPrice) {
+    const sql = `
+      INSERT INTO product_addons (
+        product_id,
+        addon_name,
+        additional_price
+      )
+      VALUES ($1, $2, $3)
+    `;
+
+    await client.query(sql, [productId, addonName, additionalPrice]);
+  }
+
+  async findById(client, productId) {
+    const sql = `
+      SELECT
+        p.product_id AS id,
+        p.product_name AS name,
+        pc.category_name AS category,
+        p.base_price AS price,
+        p.description,
+        p.has_unli_rice AS "unliRice",
+        p.is_active AS available,
+        pi.image_url AS image,
+        (
+          SELECT COALESCE(JSON_AGG(JSON_BUILD_OBJECT(
+            'id', pa.addon_id,
+            'name', pa.addon_name,
+            'price', pa.additional_price
+          )), '[]')
+          FROM product_addons pa
+          WHERE pa.product_id = p.product_id
+        ) AS addons
+      FROM products p
+      JOIN product_categories pc ON p.category_id = pc.category_id
+      LEFT JOIN product_images pi 
+      ON p.product_id = pi.product_id
+      AND pi.is_primary = TRUE
+      WHERE p.product_id = $1
+    `;
+
+    const { rows } = await client.query(sql, [productId]);
+
+    return rows[0];
   }
 }
 
