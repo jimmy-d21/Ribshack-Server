@@ -2,8 +2,9 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import ENV from "./utils/env.js";
 import { checkConnection } from "./config/db.js";
-import adminRoutes from "./routes/admin.route.js";
 import { errorHandler, notFound } from "./middlewares/error.middleware.js";
+import adminRoutes from "./routes/admin.route.js";
+import storeRoutes from "./routes/store.route.js";
 
 const app = express();
 const PORT = ENV.server.port || 5000;
@@ -17,6 +18,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/store", storeRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
