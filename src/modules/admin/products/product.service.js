@@ -180,4 +180,33 @@ export const AdminProductServices = {
       client.release();
     }
   },
+
+  // Todo: update product availabilty menu for each branch
+  updateAvailability: async (productId) => {
+    const client = await db.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      const product = await model.findById(client, productId);
+
+      if (!product) {
+        throw new Error("Product not found");
+      }
+
+      const newStatus = !product.available;
+
+      await model.updateAvailability(client, productId, newStatus);
+
+      const updatedProduct = await model.findById(client, productId);
+
+      await client.query("COMMIT");
+      return updatedProduct;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  },
 };

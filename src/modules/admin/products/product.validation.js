@@ -95,4 +95,24 @@ export const AdminProductValidation = {
 
     next();
   },
+
+  updateAvailability: (req, res, next) => {
+    const { productId } = req.params;
+
+    if (!productId) {
+      return res.status(400).json({
+        success: false,
+        message: "Product ID is required",
+      });
+    }
+
+    if (isNaN(productId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid product ID",
+      });
+    }
+
+    next();
+  },
 };

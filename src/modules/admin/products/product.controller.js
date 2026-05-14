@@ -67,9 +67,11 @@ export const AdminProductController = {
       } = req.body;
       const updatedProduct = await service.updateProduct(productId, req.body);
 
-      return res
-        .status(200)
-        .json({ message: "Product updated successfully!", updatedProduct });
+      return res.status(200).json({
+        success: true,
+        message: "Product updated successfully!",
+        updatedProduct,
+      });
     } catch (error) {
       return res.status(500).json({
         success: false,
@@ -86,6 +88,24 @@ export const AdminProductController = {
       return res.status(200).json({
         success: true,
         message: `${product.name} removed from catalog`,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  },
+
+  updateAvailability: async (req, res) => {
+    try {
+      const { productId } = req.params;
+      const updatedProduct = await service.updateAvailability(productId);
+
+      return res.status(200).json({
+        success: true,
+        message: `${updatedProduct.name} updated successfully`,
+        updatedProduct,
       });
     } catch (error) {
       return res.status(500).json({

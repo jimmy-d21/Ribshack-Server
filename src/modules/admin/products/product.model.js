@@ -1,6 +1,7 @@
 import db from "../../../config/db.js";
 
 class AdminProductModel {
+  // Todo: provide a best seller based on total orders
   async findAll() {
     const sql = `
       SELECT
@@ -189,6 +190,20 @@ class AdminProductModel {
     const sql = `DELETE FROM products WHERE product_id = $1 RETURNING *`;
 
     const { rows } = await client.query(sql, [productId]);
+    return rows[0];
+  }
+
+  async updateAvailability(client, productId, available) {
+    const sql = `
+    UPDATE products
+    SET is_active = $1,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE product_id = $2
+    RETURNING product_id, product_name, is_active
+  `;
+
+    const { rows } = await client.query(sql, [available, productId]);
+
     return rows[0];
   }
 }

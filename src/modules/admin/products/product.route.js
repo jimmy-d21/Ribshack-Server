@@ -13,5 +13,10 @@ router.get(
 router.post("/", validate.createProduct, controller.createProduct);
 router.put("/:productId", validate.updateProduct, controller.updateProduct);
 router.delete("/:productId", validate.deleteProduct, controller.deleteProduct);
+router.patch(
+  "/:productId/availability",
+  validate.updateAvailability,
+  controller.updateAvailability,
+);
 
 export default router;
