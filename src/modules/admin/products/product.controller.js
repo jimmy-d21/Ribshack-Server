@@ -77,4 +77,21 @@ export const AdminProductController = {
       });
     }
   },
+
+  deleteProduct: async (req, res) => {
+    try {
+      const { productId } = req.params;
+      const product = await service.deleteProduct(productId);
+
+      return res.status(200).json({
+        success: true,
+        message: `${product.name} removed from catalog`,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  },
 };

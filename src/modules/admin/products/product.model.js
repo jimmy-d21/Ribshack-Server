@@ -184,6 +184,13 @@ class AdminProductModel {
       productId,
     ]);
   }
+
+  async delete(client, productId) {
+    const sql = `DELETE FROM products WHERE product_id = $1 RETURNING *`;
+
+    const { rows } = await client.query(sql, [productId]);
+    return rows[0];
+  }
 }
 
 export const adminProductModel = new AdminProductModel();

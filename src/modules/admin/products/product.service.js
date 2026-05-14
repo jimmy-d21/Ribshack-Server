@@ -7,6 +7,7 @@ export const AdminProductServices = {
     return await model.findAll();
   },
 
+  // Todo: create product menu for every branch
   createProduct: async (productData) => {
     const client = await db.connect();
 
@@ -83,6 +84,7 @@ export const AdminProductServices = {
     return product;
   },
 
+  // Todo: update product menu for each branch
   updateProduct: async (productId, productData) => {
     const client = await db.connect();
 
@@ -143,6 +145,34 @@ export const AdminProductServices = {
       const finalProduct = await model.findById(client, productId);
       await client.query("COMMIT");
       return finalProduct;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  },
+
+  // Todo: delete product menu for each branch
+  deleteProduct: async (productId) => {
+    const client = await db.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      const product = await model.findById(client, productId);
+
+      if (!product) {
+        throw new Error("Product not found");
+      }
+
+      await model.deleteAllAddOns(client, productId);
+
+      await model.delete(client, productId);
+
+      await client.query("COMMIT");
+
+      return product;
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;
