@@ -39,14 +39,14 @@ export const AdminProductServices = {
         available,
       });
 
-      let imageUrl = null;
-
       if (image) {
         const uploadedImage = await cloudinary.uploader.upload(image);
 
-        imageUrl = uploadedImage.secure_url;
-
-        await model.createImage(client, newProduct.product_id, imageUrl);
+        await model.createImage(
+          client,
+          newProduct.product_id,
+          uploadedImage.secure_url,
+        );
       }
 
       if (addOns && Array.isArray(addOns)) {
@@ -71,5 +71,15 @@ export const AdminProductServices = {
     } finally {
       client.release();
     }
+  },
+
+  getProductDetails: async (productId) => {
+    const product = await model.findById(undefined, productId);
+
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    return product;
   },
 };

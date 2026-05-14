@@ -18,17 +18,23 @@ export const AdminProductValidation = {
       });
     }
 
-    if (!name.trim() || !category.trim() || !description.trim()) {
+    next();
+  },
+
+  getProductDetails: (req, res, next) => {
+    const { productId } = req.params;
+
+    if (!productId) {
       return res.status(400).json({
         success: false,
-        message: "Fields cannot be empty",
+        message: "Product ID is required",
       });
     }
 
-    if (isNaN(price) || Number(price) < 0) {
+    if (isNaN(productId)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid price",
+        message: "Invalid product ID",
       });
     }
 

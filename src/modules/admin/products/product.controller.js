@@ -10,8 +10,6 @@ export const AdminProductController = {
         products,
       });
     } catch (error) {
-      console.error(error);
-
       return res.status(500).json({
         success: false,
         message: error.message,
@@ -21,17 +19,33 @@ export const AdminProductController = {
 
   createProduct: async (req, res) => {
     try {
-      const newProduct = await service.createProduct(req.body);
+      const product = await service.createProduct(req.body);
 
       return res.status(201).json({
         success: true,
         message: "Product created successfully",
-        product: newProduct,
+        product,
       });
     } catch (error) {
-      console.error(error);
-
       return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  },
+
+  getProductDetails: async (req, res) => {
+    try {
+      const { productId } = req.params;
+
+      const product = await service.getProductDetails(productId);
+
+      return res.status(200).json({
+        success: true,
+        product,
+      });
+    } catch (error) {
+      return res.status(404).json({
         success: false,
         message: error.message,
       });

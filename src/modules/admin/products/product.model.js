@@ -13,20 +13,25 @@ class AdminProductModel {
         p.is_active AS available,
         pi.image_url AS image,
         (
-          SELECT COALESCE(JSON_AGG(JSON_BUILD_OBJECT(
-            'id', pa.addon_id,
-            'name', pa.addon_name,
-            'price', pa.additional_price
-          )), '[]')
+          SELECT COALESCE(
+            JSON_AGG(
+              JSON_BUILD_OBJECT(
+                'id', pa.addon_id,
+                'name', pa.addon_name,
+                'price', pa.additional_price
+              )
+            ),
+            '[]'
+          )
           FROM product_addons pa
           WHERE pa.product_id = p.product_id
           AND pa.is_active = TRUE
         ) AS addons
       FROM products p
       JOIN product_categories pc ON p.category_id = pc.category_id
-      LEFT JOIN product_images pi 
-      ON p.product_id = pi.product_id 
-      AND pi.is_primary = TRUE
+      LEFT JOIN product_images pi
+        ON p.product_id = pi.product_id
+        AND pi.is_primary = TRUE
       ORDER BY p.created_at DESC
     `;
 
@@ -45,9 +50,11 @@ class AdminProductModel {
 
   async createCategory(client, name) {
     const { rows } = await client.query(
-      `INSERT INTO product_categories (category_name)
-       VALUES ($1)
-       RETURNING *`,
+      `
+      INSERT INTO product_categories (category_name)
+      VALUES ($1)
+      RETURNING *
+      `,
       [name],
     );
 
@@ -108,7 +115,7 @@ class AdminProductModel {
     await client.query(sql, [productId, addonName, additionalPrice]);
   }
 
-  async findById(client, productId) {
+  async findById(client = db, productId) {
     const sql = `
       SELECT
         p.product_id AS id,
@@ -120,19 +127,25 @@ class AdminProductModel {
         p.is_active AS available,
         pi.image_url AS image,
         (
-          SELECT COALESCE(JSON_AGG(JSON_BUILD_OBJECT(
-            'id', pa.addon_id,
-            'name', pa.addon_name,
-            'price', pa.additional_price
-          )), '[]')
+          SELECT COALESCE(
+            JSON_AGG(
+              JSON_BUILD_OBJECT(
+                'id', pa.addon_id,
+                'name', pa.addon_name,
+                'price', pa.additional_price
+              )
+            ),
+            '[]'
+          )
           FROM product_addons pa
           WHERE pa.product_id = p.product_id
+          AND pa.is_active = TRUE
         ) AS addons
       FROM products p
       JOIN product_categories pc ON p.category_id = pc.category_id
-      LEFT JOIN product_images pi 
-      ON p.product_id = pi.product_id
-      AND pi.is_primary = TRUE
+      LEFT JOIN product_images pi
+        ON p.product_id = pi.product_id
+        AND pi.is_primary = TRUE
       WHERE p.product_id = $1
     `;
 
