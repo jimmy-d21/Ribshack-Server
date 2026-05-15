@@ -6,5 +6,10 @@ const router = express.Router();
 
 router.get("/", controller.getAllMenu);
 router.get("/:productId", validate.getMenuDetails, controller.getMenuDetails);
+router.patch(
+  "/:productId/availability",
+  validate.updateMenuStatus,
+  controller.updateMenuStatus,
+);
 
 export default router;

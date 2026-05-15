@@ -33,3 +33,24 @@ export const getMenuDetails = async (req, res) => {
       .json({ success: false, message: error.message });
   }
 };
+
+export const updateMenuStatus = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const branchId = req.authUser.id;
+
+    const updatedMenu = await service.updateMenuStatus(productId, branchId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Updated status successfully",
+      updatedMenu,
+    });
+  } catch (error) {
+    const isNotFound = error.message.includes("not found");
+    const isUnauthorized = error.message.includes("not authorized"); // added
+    return res
+      .status(isNotFound ? 404 : isUnauthorized ? 403 : 500)
+      .json({ success: false, message: error.message });
+  }
+};
