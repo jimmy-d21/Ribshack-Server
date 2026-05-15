@@ -4,7 +4,7 @@ CREATE TABLE roles (
     role_name VARCHAR(50) NOT NULL UNIQUE,
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);s
+);
 
 -- Stores central HQ administrator accounts for the control panel
 CREATE TABLE admins (
