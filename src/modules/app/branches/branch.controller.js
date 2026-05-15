@@ -10,3 +10,14 @@ export const getAllAvailableBranches = async (req, res) => {
     return res.status(401).json({ success: false, message: error.message });
   }
 };
+
+export const getAllBranchMenu = async (req, res) => {
+  try {
+    const { branchId } = req.params;
+
+    const branchMenu = await service.getAllBranchMenu(branchId);
+    return res.status(200).json({ success: true, branchMenu });
+  } catch (error) {
+    return res.status(401).json({ success: false, message: error.message });
+  }
+};

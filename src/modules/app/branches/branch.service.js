@@ -6,3 +6,9 @@ export const getAllAvailableBranches = async (userId) => {
   const location = "Cebu City"; // Default cebu
   return await model.findAll(location);
 };
+
+export const getAllBranchMenu = async (branchId) => {
+  const branch = await model.findById(branchId);
+  if (!branch) throw new Error("Branch not found");
+  return await model.findAllBranchMenu(branchId);
+};

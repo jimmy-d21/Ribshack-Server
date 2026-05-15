@@ -4,7 +4,7 @@ import { checkConnection } from "./config/db.js";
 
 const PORT = ENV.server.port || 5000;
 
-const startServer = async () => {
+(async function startServer() {
   try {
     await checkConnection();
 
@@ -15,6 +15,4 @@ const startServer = async () => {
     console.error("Failed to start server:", error.message);
     process.exit(1);
   }
-};
-
-startServer();
+})();
