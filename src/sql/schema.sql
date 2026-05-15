@@ -220,3 +220,14 @@ CREATE TABLE branch_menu (
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (branch_id, product_id)
 );
+
+-- Stores all system users — customers
+CREATE TABLE users (
+    user_id        SERIAL PRIMARY KEY,
+    full_name      VARCHAR(100) NOT NULL,
+    email          VARCHAR(100) NOT NULL UNIQUE,
+    password_hash  TEXT NOT NULL,
+    contact_number VARCHAR(20),
+    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
