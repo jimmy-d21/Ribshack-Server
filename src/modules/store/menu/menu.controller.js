@@ -16,3 +16,20 @@ export const getAllMenu = async (req, res) => {
       .json({ success: false, message: error.message });
   }
 };
+
+export const getMenuDetails = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const product = await service.getMenuDetails(productId);
+
+    return res.status(200).json({
+      success: true,
+      product,
+    });
+  } catch (error) {
+    const isNotFound = error.message.includes("not found");
+    return res
+      .status(isNotFound ? 404 : 500)
+      .json({ success: false, message: error.message });
+  }
+};

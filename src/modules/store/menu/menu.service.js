@@ -7,7 +7,12 @@ const validateBranch = async (branchId) => {
 };
 
 export const getAllMenu = async (branchId) => {
-  // fixed typo branhcId → branchId
   await validateBranch(branchId);
-  return model.findAll(branchId); // removed redundant await
+  return model.findAll(branchId);
+};
+
+export const getMenuDetails = async (productId) => {
+  const product = await model.findById(productId);
+  if (!product) throw new Error("Product not found");
+  return product;
 };

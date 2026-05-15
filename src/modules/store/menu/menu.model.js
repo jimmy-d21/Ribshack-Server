@@ -25,6 +25,29 @@ class StoreMenuModel {
     return rows;
   }
 
+  async findById(productId) {
+    const sql = `SELECT
+                    bm.branch_menu_id AS id,
+                    p.product_id AS "productCode",
+                    p.product_name AS "productName",
+                    pc.category_name AS category,
+                    p.base_price AS "basePrice",
+                    p.has_unli_rice AS "includesUnliRice",
+                    p.is_active AS "isActive",
+                    pi.image_url AS "imageUrl",
+                    JSON_BUILD_OBJECT(
+                        'isAvailable', bm.is_visible,
+                        'unavailableReason', null
+                    ) AS availability
+                FROM branch_menu AS bm
+                JOIN products AS p ON bm.product_id = p.product_id
+                JOIN product_categories AS pc ON p.category_id = pc.category_id
+                JOIN product_images AS pi ON p.product_id = pi.product_id
+                WHERE bm.branch_menu_id = $1`; // removed unnecessary ORDER BY
+    const { rows } = await db.query(sql, [productId]);
+    return rows[0];
+  }
+
   async findBranchById(branchId) {
     const sql = `SELECT
                     b.branch_id AS id,
