@@ -39,6 +39,25 @@ class StoreInventoryModel {
     const { rows } = await db.query(sql, [branchId]);
     return rows[0];
   }
+
+  async findAllCritical(branchId) {
+    const sql = `SELECT
+                    item_id AS id,
+                    item_name AS itemName,
+                    item_type AS itemType,
+                    current_quantity AS currentStock,
+                    reorder_threshold AS minimumThreshold,
+                    unit_of_measure AS unit,
+                    CASE 
+                        WHEN current_quantity <= (reorder_threshold * 0.50) THEN 'Critical'
+                        WHEN current_quantity <= (reorder_threshold * 0.80) THEN 'Low'
+                        ELSE 'Adequate'
+                    END AS status
+                FROM inventory_items
+                WHERE branch_id = $1 AND current_quantity <= (reorder_threshold * 0.50)`;
+    const { rows } = await db.query(sql, [branchId]);
+    return rows;
+  }
 }
 
 export const storeInventoryModel = new StoreInventoryModel();
