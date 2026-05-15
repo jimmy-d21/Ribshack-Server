@@ -17,7 +17,7 @@ export const register = (req, res, next) => {
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
+  if (!emailRegex.test(email.trim())) {
     return res.status(400).json({
       success: false,
       message: "Please provide a valid email address",
@@ -35,6 +35,34 @@ export const register = (req, res, next) => {
     return res.status(400).json({
       success: false,
       message: "Passwords do not match",
+    });
+  }
+
+  next();
+};
+
+export const login = (req, res, next) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide all required fields",
+    });
+  }
+
+  if (!email.trim() || !password.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: "Fields cannot be empty or whitespace",
+    });
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.trim())) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide a valid email address",
     });
   }
 

@@ -2,7 +2,13 @@ import db from "../../../config/db.js";
 
 class AppAuthModel {
   async findByEmail(email) {
-    const sql = `SELECT user_id, email 
+    const sql = `SELECT
+                    user_id AS "id",
+                    full_name AS "fullName",
+                    email,
+                    contact_number AS "contactNumber",
+                    password_hash AS password,
+                    created_at AS "createdAt"
                  FROM users 
                  WHERE email = $1`;
     const { rows } = await db.query(sql, [email]);
