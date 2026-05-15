@@ -17,5 +17,6 @@ router.get(
 );
 router.post("/", validate.addInventoryItem, controller.addInventoryItem);
 router.put("/:itemId", validate.updateInventory, controller.updateInventory);
+router.delete("/:itemId", validate.deleteInventory, controller.deleteInventory);
 
 export default router;

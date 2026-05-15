@@ -83,3 +83,23 @@ export const updateInventory = async (req, res) => {
     });
   }
 };
+
+export const deleteInventory = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const branchId = req.authUser.id;
+
+    await service.deleteInventory(itemId, branchId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Deleted inventory item successfully",
+    });
+  } catch (error) {
+    const isNotFound = error.message.includes("not found");
+    const isUnauthorized = error.message.includes("not authorized");
+    return res
+      .status(isNotFound ? 404 : isUnauthorized ? 403 : 500)
+      .json({ success: false, message: error.message });
+  }
+};

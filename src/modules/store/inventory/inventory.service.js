@@ -83,3 +83,14 @@ export const updateInventory = async (inventoryId, inventoryData) => {
     unit,
   });
 };
+
+export const deleteInventory = async (inventoryId, branchId) => {
+  const inventoryItem = await model.findById(inventoryId);
+  if (!inventoryItem) throw new Error("Inventory item not found");
+
+  if (branchId.toString() !== inventoryItem.branchId.toString()) {
+    throw new Error("You're not authorized to delete this inventory item");
+  }
+
+  return model.findByIdAndDelete(inventoryId);
+};

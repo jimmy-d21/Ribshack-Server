@@ -25,7 +25,7 @@ class StoreInventoryModel {
   async findById(inventoryId) {
     const sql = `SELECT
                   item_id AS id,
-                  branch_id AS branchId,
+                  branch_id AS "branchId",
                   item_name AS "itemName",
                   item_type AS "itemType",
                   current_quantity AS "currentStock",
@@ -151,6 +151,21 @@ class StoreInventoryModel {
       inventoryId,
     ];
     const { rows } = await db.query(sql, values);
+    return rows[0];
+  }
+
+  async findByIdAndDelete(inventoryId) {
+    const sql = `DELETE FROM inventory_items
+               WHERE item_id = $1
+               RETURNING
+                  item_id AS id,
+                  item_name AS "itemName",
+                  item_type AS "itemType",
+                  current_quantity AS "currentStock",
+                  reorder_threshold AS "minimumThreshold",
+                  max_threshold AS "maximumThreshold",
+                  unit_of_measure AS unit`;
+    const { rows } = await db.query(sql, [inventoryId]);
     return rows[0];
   }
 }

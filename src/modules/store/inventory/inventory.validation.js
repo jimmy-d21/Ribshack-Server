@@ -132,3 +132,16 @@ export const updateInventory = (req, res, next) => {
 
   next();
 };
+
+export const deleteInventory = (req, res, next) => {
+  const { itemId } = req.params;
+
+  if (isNaN(itemId) || Number(itemId) <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid inventory item ID",
+    });
+  }
+
+  next();
+};
