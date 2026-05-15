@@ -42,6 +42,21 @@ class AppHomeModel {
     const { rows } = await db.query(sql, [branchId]);
     return rows;
   }
+
+  async findAllCategories(branchId) {
+    const sql = `
+    SELECT DISTINCT
+      pc.category_id AS "id",
+      pc.category_name AS "name"
+    FROM product_categories pc
+    JOIN products p ON pc.category_id = p.category_id
+    JOIN branch_menu bm ON p.product_id = bm.product_id
+    WHERE bm.branch_id = $1 AND bm.is_visible = TRUE
+    ORDER BY pc.category_name ASC`;
+
+    const { rows } = await db.query(sql, [branchId]);
+    return rows;
+  }
 }
 
 export const appHomeModel = new AppHomeModel();

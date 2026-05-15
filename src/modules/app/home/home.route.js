@@ -9,5 +9,10 @@ router.get(
   validate.validateBranchId,
   controller.getBestSellingMenu,
 );
+router.get(
+  "/:branchId/categories",
+  validate.validateBranchId,
+  controller.getAllCategories,
+);
 
 export default router;
