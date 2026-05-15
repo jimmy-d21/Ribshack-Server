@@ -9,11 +9,10 @@ export const StoreAuthController = {
       const branch = await service.login(username, password);
 
       const role = "branch";
-      generateTokenAndSetCookies(res, branch.branch_id, role);
-
+      const token = generateTokenAndSetCookies(res, branch.id, role);
       return res
         .status(200)
-        .json({ success: true, message: "Welcome back!", branch });
+        .json({ success: true, message: "Welcome back!", branch, token });
     } catch (error) {
       return res.status(401).json({ success: false, message: error.message });
     }

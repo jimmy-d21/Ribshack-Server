@@ -5,6 +5,7 @@ import { AdminInventoryRequestValidation as validate } from "./inventoryRequest.
 const router = express.Router();
 
 router.get("/", controller.getAllRequests);
+// Todo: update also the store inventory
 router.put(
   "/:requestId/approve",
   validate.approveRequest,

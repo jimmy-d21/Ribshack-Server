@@ -1,9 +1,3 @@
-export const validateBranch = async (req, res, next) => {
-  const branchId = req.authUser.id;
-  if (!branchId) throw new Error("Branch ID not found");
-  next();
-};
-
 export const addInventoryItem = (req, res, next) => {
   const {
     itemName,
@@ -14,7 +8,6 @@ export const addInventoryItem = (req, res, next) => {
     unit,
   } = req.body;
 
-  // Check for missing fields
   if (
     !itemName ||
     !itemType ||
@@ -29,7 +22,6 @@ export const addInventoryItem = (req, res, next) => {
     });
   }
 
-  // Only trim string fields
   if (!itemName.trim() || !itemType.trim() || !unit.trim()) {
     return res.status(400).json({
       success: false,
@@ -37,7 +29,6 @@ export const addInventoryItem = (req, res, next) => {
     });
   }
 
-  // Validate numeric fields
   if (
     isNaN(currentStock) ||
     isNaN(minimumThreshold) ||
@@ -46,6 +37,21 @@ export const addInventoryItem = (req, res, next) => {
     return res.status(400).json({
       success: false,
       message: "Stock and threshold fields must be valid numbers",
+    });
+  }
+
+  // added — was missing in addInventoryItem but present in updateInventory
+  if (Number(minimumThreshold) <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide a valid minimum threshold",
+    });
+  }
+
+  if (Number(maximumThreshold) <= Number(minimumThreshold)) {
+    return res.status(400).json({
+      success: false,
+      message: "Maximum threshold must be greater than minimum threshold",
     });
   }
 
@@ -115,7 +121,6 @@ export const updateInventory = (req, res, next) => {
     });
   }
 
-  // moved from service to validator
   if (Number(minimumThreshold) <= 0) {
     return res.status(400).json({
       success: false,
@@ -140,6 +145,49 @@ export const deleteInventory = (req, res, next) => {
     return res.status(400).json({
       success: false,
       message: "Invalid inventory item ID",
+    });
+  }
+
+  next();
+};
+
+export const inventoryRequest = (req, res, next) => {
+  const { itemId } = req.params;
+  const { quantity, urgency, notes } = req.body;
+
+  if (isNaN(itemId) || Number(itemId) <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid inventory item ID",
+    });
+  }
+
+  if (!quantity || !urgency || !notes) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide all required fields",
+    });
+  }
+
+  if (!urgency.trim() || !notes.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: "Fields cannot be empty or whitespace",
+    });
+  }
+
+  if (isNaN(quantity) || Number(quantity) <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Quantity must be a valid positive number",
+    });
+  }
+
+  const validUrgencyLevels = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
+  if (!validUrgencyLevels.includes(urgency.toUpperCase())) {
+    return res.status(400).json({
+      success: false,
+      message: "Urgency must be one of: LOW, MEDIUM, HIGH, CRITICAL",
     });
   }
 
