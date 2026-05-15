@@ -12,3 +12,11 @@ export const getAllBranchMenu = async (branchId) => {
   if (!branch) throw new Error("Branch not found");
   return await model.findAllBranchMenu(branchId);
 };
+
+export const getBranchDetails = async (branchId) => {
+  const branch = await model.findById(branchId);
+  if (!branch) {
+    throw new Error("Branch not found");
+  }
+  return branch;
+};
