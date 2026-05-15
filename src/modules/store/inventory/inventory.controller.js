@@ -60,3 +60,26 @@ export const getInventoryDetails = async (req, res) => {
     });
   }
 };
+
+export const updateInventory = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const updatedInventoryItem = await service.updateInventory(
+      itemId,
+      req.body,
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Updated inventory item successfully",
+      updatedInventoryItem,
+    });
+  } catch (error) {
+    const isDuplicate = error.message.includes("already exists");
+    const isNotFound = error.message.includes("not found");
+    return res.status(isDuplicate ? 409 : isNotFound ? 404 : 500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

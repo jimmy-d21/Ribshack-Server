@@ -4,6 +4,7 @@ class StoreInventoryModel {
   async findAll(branchId, { criticalOnly = false } = {}) {
     const sql = `SELECT
                     item_id AS id,
+                    branch_id AS branchId,
                     item_name AS itemName,
                     item_type AS itemType,
                     current_quantity AS currentStock,
@@ -24,6 +25,7 @@ class StoreInventoryModel {
   async findById(inventoryId) {
     const sql = `SELECT
                   item_id AS id,
+                  branch_id AS branchId,
                   item_name AS "itemName",
                   item_type AS "itemType",
                   current_quantity AS "currentStock",
@@ -107,6 +109,48 @@ class StoreInventoryModel {
                WHERE branch_id = $1 
                AND LOWER(item_name) = LOWER($2)`;
     const { rows } = await db.query(sql, [branchId, itemName]);
+    return rows[0];
+  }
+
+  async findByIdAndUpdate(inventoryId, inventoryData) {
+    const {
+      itemName,
+      itemType,
+      currentStock,
+      minimumThreshold,
+      maximumThreshold,
+      unit,
+    } = inventoryData;
+
+    const sql = `UPDATE inventory_items
+                  SET item_name = $1, item_type = $2, current_quantity = $3, 
+                      reorder_threshold = $4, max_threshold = $5, unit_of_measure = $6
+                  WHERE item_id = $7
+                  RETURNING
+                      item_id AS id,
+                      branch_id AS "branchId",
+                      item_name AS "itemName",
+                      item_type AS "itemType",
+                      current_quantity AS "currentStock",
+                      reorder_threshold AS "minimumThreshold",
+                      max_threshold AS "maximumThreshold",
+                      unit_of_measure AS unit,
+                      CASE 
+                          WHEN current_quantity <= (reorder_threshold * 0.50) THEN 'Critical'
+                          WHEN current_quantity <= (reorder_threshold * 0.80) THEN 'Low'
+                          ELSE 'Adequate'
+                      END AS status`;
+
+    const values = [
+      itemName,
+      itemType,
+      currentStock,
+      minimumThreshold,
+      maximumThreshold,
+      unit,
+      inventoryId,
+    ];
+    const { rows } = await db.query(sql, values);
     return rows[0];
   }
 }

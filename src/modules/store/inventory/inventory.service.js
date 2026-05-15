@@ -48,3 +48,38 @@ export const getInventoryDetails = async (inventoryId) => {
   if (!inventoryItem) throw new Error("Inventory item not found");
   return inventoryItem;
 };
+
+export const updateInventory = async (inventoryId, inventoryData) => {
+  const {
+    itemName,
+    itemType,
+    currentStock,
+    minimumThreshold,
+    maximumThreshold,
+    unit,
+  } = inventoryData;
+
+  // check if inventory item exists first
+  const existingInventory = await model.findById(inventoryId);
+  if (!existingInventory) throw new Error("Inventory item not found");
+
+  // only check duplicate if itemName is being changed
+  if (itemName.toLowerCase() !== existingInventory.itemName.toLowerCase()) {
+    const existingItem = await model.findByItemName(
+      existingInventory.branchId,
+      itemName,
+    );
+    if (existingItem) {
+      throw new Error(`"${itemName}" already exists in your inventory`);
+    }
+  }
+
+  return model.findByIdAndUpdate(inventoryId, {
+    itemName,
+    itemType,
+    currentStock,
+    minimumThreshold,
+    maximumThreshold,
+    unit,
+  });
+};

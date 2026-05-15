@@ -16,5 +16,6 @@ router.get(
   controller.getInventoryDetails,
 );
 router.post("/", validate.addInventoryItem, controller.addInventoryItem);
+router.put("/:itemId", validate.updateInventory, controller.updateInventory);
 
 export default router;
