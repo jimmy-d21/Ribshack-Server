@@ -40,6 +40,55 @@ class StoreInventoryModel {
     const { rows } = await db.query(sql, [branchId]);
     return rows[0];
   }
+
+  async create(branchId, inventoryData) {
+    const {
+      itemName,
+      itemType,
+      currentStock,
+      minimumThreshold,
+      maximumThreshold,
+      unit,
+    } = inventoryData;
+
+    const sql = `INSERT INTO inventory_items
+               (branch_id, item_name, item_type, current_quantity, reorder_threshold, max_threshold, unit_of_measure)
+               VALUES ($1, $2, $3, $4, $5, $6, $7)
+               RETURNING 
+                  item_id AS id,
+                  item_name AS "itemName",
+                  item_type AS "itemType",
+                  current_quantity AS "currentStock",
+                  reorder_threshold AS "minimumThreshold",
+                  max_threshold AS "maximumThreshold",
+                  unit_of_measure AS unit,
+                  CASE 
+                      WHEN current_quantity <= (reorder_threshold * 0.50) THEN 'Critical'
+                      WHEN current_quantity <= (reorder_threshold * 0.80) THEN 'Low'
+                      ELSE 'Adequate'
+                  END AS status`;
+
+    const values = [
+      branchId,
+      itemName,
+      itemType,
+      currentStock,
+      minimumThreshold,
+      maximumThreshold,
+      unit,
+    ];
+    const { rows } = await db.query(sql, values);
+    return rows[0];
+  }
+
+  async findByItemName(branchId, itemName) {
+    const sql = `SELECT item_id 
+               FROM inventory_items
+               WHERE branch_id = $1 
+               AND LOWER(item_name) = LOWER($2)`;
+    const { rows } = await db.query(sql, [branchId, itemName]);
+    return rows[0];
+  }
 }
 
 export const storeInventoryModel = new StoreInventoryModel();

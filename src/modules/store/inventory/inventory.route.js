@@ -10,5 +10,6 @@ router.get(
   validate.validateBranch,
   controller.getAllInventoryCritical,
 );
+router.post("/", validate.addInventoryItem, controller.addInventoryItem);
 
 export default router;

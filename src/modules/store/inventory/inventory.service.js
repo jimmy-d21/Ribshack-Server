@@ -15,3 +15,30 @@ export const getAllInventoryCritical = async (branchId) => {
   await validateBranch(branchId);
   return model.findAll(branchId, { criticalOnly: true });
 };
+
+export const addInventoryItem = async (branchId, inventoryData) => {
+  const {
+    itemName,
+    itemType,
+    currentStock,
+    minimumThreshold,
+    maximumThreshold,
+    unit,
+  } = inventoryData;
+
+  await validateBranch(branchId);
+
+  const existingItem = await model.findByItemName(branchId, itemName);
+  if (existingItem) {
+    throw new Error(`"${itemName}" already exists in your inventory`);
+  }
+
+  return model.create(branchId, {
+    itemName,
+    itemType,
+    currentStock,
+    minimumThreshold,
+    maximumThreshold,
+    unit,
+  });
+};
