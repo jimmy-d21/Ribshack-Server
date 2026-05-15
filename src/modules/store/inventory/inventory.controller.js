@@ -42,3 +42,21 @@ export const addInventoryItem = async (req, res) => {
     });
   }
 };
+
+export const getInventoryDetails = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const inventoryItem = await service.getInventoryDetails(itemId);
+
+    return res.status(200).json({
+      success: true,
+      inventoryItem,
+    });
+  } catch (error) {
+    const isNotFound = error.message.includes("not found");
+    return res.status(isNotFound ? 404 : 500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

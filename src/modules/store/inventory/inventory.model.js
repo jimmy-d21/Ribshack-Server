@@ -21,6 +21,26 @@ class StoreInventoryModel {
     return rows;
   }
 
+  async findById(inventoryId) {
+    const sql = `SELECT
+                  item_id AS id,
+                  item_name AS "itemName",
+                  item_type AS "itemType",
+                  current_quantity AS "currentStock",
+                  reorder_threshold AS "minimumThreshold",
+                  max_threshold AS "maximumThreshold",
+                  unit_of_measure AS unit,
+                  CASE 
+                      WHEN current_quantity <= (reorder_threshold * 0.50) THEN 'Critical'
+                      WHEN current_quantity <= (reorder_threshold * 0.80) THEN 'Low'
+                      ELSE 'Adequate'
+                  END AS status
+              FROM inventory_items
+              WHERE item_id = $1`;
+    const { rows } = await db.query(sql, [inventoryId]);
+    return rows[0];
+  }
+
   async findBranchById(branchId) {
     const sql = `SELECT
                     b.branch_id AS id,

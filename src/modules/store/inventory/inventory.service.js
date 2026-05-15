@@ -42,3 +42,9 @@ export const addInventoryItem = async (branchId, inventoryData) => {
     unit,
   });
 };
+
+export const getInventoryDetails = async (inventoryId) => {
+  const inventoryItem = await model.findById(inventoryId);
+  if (!inventoryItem) throw new Error("Inventory item not found");
+  return inventoryItem;
+};
