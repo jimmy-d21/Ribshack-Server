@@ -1,7 +1,7 @@
 import db from "../../../config/db.js";
 
 class StoreInventoryModel {
-  async findAll(branchId) {
+  async findAll(branchId, { criticalOnly = false } = {}) {
     const sql = `SELECT
                     item_id AS id,
                     item_name AS itemName,
@@ -15,7 +15,8 @@ class StoreInventoryModel {
                         ELSE 'Adequate'
                     END AS status
                 FROM inventory_items
-                WHERE branch_id = $1`;
+                WHERE branch_id = $1
+                ${criticalOnly ? "AND current_quantity <= (reorder_threshold * 0.50)" : ""}`;
     const { rows } = await db.query(sql, [branchId]);
     return rows;
   }
@@ -38,25 +39,6 @@ class StoreInventoryModel {
                 WHERE b.branch_id = $1`;
     const { rows } = await db.query(sql, [branchId]);
     return rows[0];
-  }
-
-  async findAllCritical(branchId) {
-    const sql = `SELECT
-                    item_id AS id,
-                    item_name AS itemName,
-                    item_type AS itemType,
-                    current_quantity AS currentStock,
-                    reorder_threshold AS minimumThreshold,
-                    unit_of_measure AS unit,
-                    CASE 
-                        WHEN current_quantity <= (reorder_threshold * 0.50) THEN 'Critical'
-                        WHEN current_quantity <= (reorder_threshold * 0.80) THEN 'Low'
-                        ELSE 'Adequate'
-                    END AS status
-                FROM inventory_items
-                WHERE branch_id = $1 AND current_quantity <= (reorder_threshold * 0.50)`;
-    const { rows } = await db.query(sql, [branchId]);
-    return rows;
   }
 }
 
