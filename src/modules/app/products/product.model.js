@@ -24,7 +24,6 @@ class AppProductModel {
     return rows[0];
   }
 
-  // lightweight lookup used before fetching addons
   async findById(productId) {
     const sql = `SELECT
                     bm.branch_menu_id AS "menuId",

@@ -1,0 +1,9 @@
+import express from "express";
+import * as controller from "./cart.controller.js";
+import * as validate from "./cart.validation.js";
+
+const router = express.Router();
+
+router.get("/", validate.getAllCarts, controller.getAllCarts);
+
+export default router;

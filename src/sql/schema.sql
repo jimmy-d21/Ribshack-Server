@@ -231,3 +231,124 @@ CREATE TABLE users (
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Stores the active cart per customer
+CREATE TABLE carts (
+    cart_id     SERIAL PRIMARY KEY,
+    customer_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    branch_id   INTEGER NOT NULL REFERENCES branches(branch_id),
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (customer_id) -- one active cart per customer
+);
+
+-- Stores individual items inside a cart
+CREATE TABLE cart_items (
+    cart_item_id SERIAL PRIMARY KEY,
+    cart_id      INTEGER NOT NULL REFERENCES carts(cart_id) ON DELETE CASCADE,
+    product_id   INTEGER NOT NULL REFERENCES products(product_id),
+    quantity     INTEGER NOT NULL DEFAULT 1,
+    unit_price   NUMERIC(10,2) NOT NULL,
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Stores addons selected per cart item
+CREATE TABLE cart_item_addons (
+    cart_addon_id SERIAL PRIMARY KEY,
+    cart_item_id  INTEGER NOT NULL REFERENCES cart_items(cart_item_id) ON DELETE CASCADE,
+    addon_id      INTEGER NOT NULL REFERENCES product_addons(addon_id),
+    addon_name    VARCHAR(100) NOT NULL,
+    addon_price   NUMERIC(10,2) NOT NULL DEFAULT 0.00
+);
+
+-- Stores saved delivery addresses per customer
+CREATE TABLE customer_addresses (
+    address_id    SERIAL PRIMARY KEY,
+    customer_id   INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    address_label VARCHAR(50),
+    full_address  TEXT NOT NULL,
+    city          VARCHAR(100) NOT NULL,
+    province      VARCHAR(100),
+    postal_code   VARCHAR(20),
+    is_default    BOOLEAN DEFAULT FALSE,
+    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Records delivery address and timing used per order
+CREATE TABLE delivery_details (
+    delivery_id             SERIAL PRIMARY KEY,
+    order_id                INTEGER NOT NULL REFERENCES orders(order_id) ON DELETE CASCADE,
+    address_id              INTEGER REFERENCES customer_addresses(address_id),
+    full_address            TEXT NOT NULL,
+    city                    VARCHAR(100) NOT NULL,
+    estimated_delivery_time TIMESTAMP,
+    delivered_at            TIMESTAMP,
+    created_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Master table for all customer orders
+CREATE TABLE orders (
+    order_id       SERIAL PRIMARY KEY,
+    customer_id    INTEGER NOT NULL REFERENCES users(user_id),
+    branch_id      INTEGER NOT NULL REFERENCES branches(branch_id),
+    order_status   VARCHAR(50) DEFAULT 'PLACED'
+                       CHECK (order_status IN
+                           ('PLACED','PREPARING','READY',
+                            'OUT_FOR_DELIVERY','DELIVERED','CANCELLED')),
+    total_amount   NUMERIC(10,2) NOT NULL,
+    payment_method VARCHAR(50) DEFAULT 'CASH_ON_DELIVERY',
+    placed_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- IMPROVED: Added total_price to order_items for easier accounting
+CREATE TABLE order_items (
+    order_item_id SERIAL PRIMARY KEY,
+    order_id      INTEGER NOT NULL REFERENCES orders(order_id) ON DELETE CASCADE,
+    product_id    INTEGER NOT NULL REFERENCES products(product_id),
+    quantity      INTEGER NOT NULL DEFAULT 1,
+    unit_price    NUMERIC(10,2) NOT NULL, -- Price of the product only
+    addons_total  NUMERIC(10,2) DEFAULT 0.00, -- Sum of all selected addons
+    subtotal      NUMERIC(10,2) NOT NULL, -- (unit_price * quantity) + addons_total
+    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- IMPROVED: Added a check for active add-ons
+CREATE TABLE order_item_addons (
+    order_addon_id SERIAL PRIMARY KEY,
+    order_item_id  INTEGER NOT NULL REFERENCES order_items(order_item_id) ON DELETE CASCADE,
+    addon_id       INTEGER NOT NULL REFERENCES product_addons(addon_id),
+    addon_name     VARCHAR(100) NOT NULL,
+    addon_price    NUMERIC(10,2) NOT NULL DEFAULT 0.00
+);
+
+-- Tracks status history of each order
+CREATE TABLE order_status_logs (
+    status_log_id SERIAL PRIMARY KEY,
+    order_id      INTEGER NOT NULL REFERENCES orders(order_id) ON DELETE CASCADE,
+    status        VARCHAR(50) NOT NULL,
+    changed_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    changed_by    INTEGER REFERENCES users(user_id)
+);
+
+-- Records payment method and status per order
+CREATE TABLE order_payments (
+    payment_id     SERIAL PRIMARY KEY,
+    order_id       INTEGER NOT NULL REFERENCES orders(order_id) ON DELETE CASCADE,
+    payment_method VARCHAR(50) NOT NULL DEFAULT 'CASH_ON_DELIVERY',
+    payment_status VARCHAR(50) DEFAULT 'PENDING'
+                       CHECK (payment_status IN ('PENDING','PAID','FAILED','REFUNDED')),
+    amount_paid    NUMERIC(10,2),
+    paid_at        TIMESTAMP,
+    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Stores special instructions provided by the customer at checkout
+CREATE TABLE order_instructions (
+    instruction_id   SERIAL PRIMARY KEY,
+    order_id         INTEGER NOT NULL REFERENCES orders(order_id) ON DELETE CASCADE,
+    instruction_text TEXT NOT NULL,
+    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
