@@ -136,6 +136,11 @@ class AppAddressModel {
                  WHERE customer_id = $1 AND address_id != $2`;
     await db.query(sql, [userId, addressId]);
   }
+
+  async deleteAddress(addressId) {
+    const sql = `DELETE FROM customer_addresses WHERE address_id = $1`;
+    await db.query(sql, [addressId]);
+  }
 }
 
 export const appAddressModel = new AppAddressModel();

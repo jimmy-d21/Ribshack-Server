@@ -70,3 +70,10 @@ export const updateAddress = async (addressId, userId, addressData) => {
 
   return updatedAddress;
 };
+
+export const deleteAddress = async (addressId) => {
+  const address = await model.findAddressById(addressId);
+  if (!address) throw new Error("Address not found");
+
+  await model.deleteAddress(addressId);
+};

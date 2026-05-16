@@ -85,3 +85,20 @@ export const updateAddress = async (req, res) => {
       .json({ success: false, message: error.message });
   }
 };
+
+export const deleteAddress = async (req, res) => {
+  try {
+    const { addressId } = req.params;
+
+    await service.deleteAddress(addressId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Address deteled successfully",
+    });
+  } catch (error) {
+    return res
+      .status(resolveStatus(error.message))
+      .json({ success: false, message: error.message });
+  }
+};
