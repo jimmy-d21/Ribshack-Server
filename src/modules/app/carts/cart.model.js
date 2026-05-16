@@ -193,6 +193,12 @@ class AppCartModel {
     const { rows } = await db.query(sql, [cartItemId]);
     return rows[0];
   }
+
+  async deleteAllCartItems(cartId) {
+    const sql = `DELETE FROM cart_items WHERE cart_id = $1 RETURNING *`;
+    const { rows } = await db.query(sql, [cartId]);
+    return rows;
+  }
 }
 
 export const appCartModel = new AppCartModel();

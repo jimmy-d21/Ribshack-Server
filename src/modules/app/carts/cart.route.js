@@ -12,5 +12,6 @@ router.delete(
   validate.deleteCartItem,
   controller.deleteCartItem,
 );
+router.delete("/", validate.deleteAllCartItem, controller.deleteAllCartItem);
 
 export default router;
