@@ -21,6 +21,26 @@ class AppAddressModel {
     return rows;
   }
 
+  async findAddressById(addressId) {
+    const sql = `
+      SELECT
+        address_id    AS "id",
+        address_label AS "label",
+        full_address  AS "fullAddress",
+        city,
+        province,
+        postal_code   AS "postalCode",
+        land_mark     AS "landMark",
+        is_default    AS "isDefault",
+        created_at    AS "createdAt"
+      FROM   customer_addresses
+      WHERE  address_id = $1
+      ORDER BY is_default DESC, created_at DESC
+    `;
+    const { rows } = await db.query(sql, [addressId]);
+    return rows[0];
+  }
+
   async createAddress(userId, addressData) {
     const {
       label,

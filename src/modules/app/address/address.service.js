@@ -5,6 +5,13 @@ export const getAllAddress = async (userId) => {
   return addresses;
 };
 
+export const getAddressDetails = async (addressId) => {
+  const address = await model.findAddressById(addressId);
+  if (!address) throw new Error("Address not found");
+
+  return address;
+};
+
 export const addAddress = async (userId, addressData) => {
   const { label, fullAddress, city, province, postalCode, landMark } =
     addressData;

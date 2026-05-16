@@ -1,7 +1,6 @@
 export const addAddress = (req, res, next) => {
   const { label, fullAddress, city, province, postalCode, landMark } = req.body;
 
-  // Required fields
   if (
     !fullAddress ||
     typeof fullAddress !== "string" ||
@@ -20,7 +19,6 @@ export const addAddress = (req, res, next) => {
     });
   }
 
-  // Optional fields — only validate type if provided
   if (
     label !== undefined &&
     (typeof label !== "string" || label.trim() === "")
@@ -71,6 +69,19 @@ export const getAllAddress = (req, res, next) => {
     return res.status(401).json({
       success: false,
       message: "Unauthorized",
+    });
+  }
+
+  next();
+};
+
+export const getAddressDetails = (req, res, next) => {
+  const { addressId } = req.params;
+
+  if (!addressId || isNaN(addressId) || Number(addressId) <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid address ID",
     });
   }
 

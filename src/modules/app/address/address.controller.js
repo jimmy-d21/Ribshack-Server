@@ -30,6 +30,23 @@ export const getAllAddress = async (req, res) => {
   }
 };
 
+export const getAddressDetails = async (req, res) => {
+  try {
+    const { addressId } = req.params;
+
+    const address = await service.getAddressDetails(addressId);
+
+    return res.status(200).json({
+      success: true,
+      address,
+    });
+  } catch (error) {
+    return res
+      .status(resolveStatus(error.message))
+      .json({ success: false, message: error.message });
+  }
+};
+
 export const addAddress = async (req, res) => {
   try {
     const userId = req.authUser.id;
