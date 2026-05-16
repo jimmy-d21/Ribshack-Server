@@ -9,5 +9,10 @@ router.get(
   validate.getProductDetails,
   controller.getProductDetails,
 );
+router.get(
+  "/:productId/addons",
+  validate.getProductAddons,
+  controller.getProductAddons,
+);
 
 export default router;
