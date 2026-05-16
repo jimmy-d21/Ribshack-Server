@@ -8,13 +8,11 @@ export const getAllCarts = async (userId) => {
 
 export const addToCart = async (userId, cartData) => {
   const client = await db.connect();
-
   try {
     await client.query("BEGIN");
 
     const { branchId, productId, quantity, price, addOns = [] } = cartData;
 
-    // Reuse existing cart or create a new one
     let cart = await model.findCartByUserId(client, userId);
     if (!cart) {
       cart = await model.createCart(client, userId, branchId);
@@ -29,7 +27,6 @@ export const addToCart = async (userId, cartData) => {
       unitPrice: price,
     });
 
-    // Insert each add-on
     for (const addOn of addOns) {
       await model.createCartAddon(client, newCartItem.cart_item_id, {
         addonId: addOn.id,
@@ -39,6 +36,46 @@ export const addToCart = async (userId, cartData) => {
     }
 
     await client.query("COMMIT");
+    return newCartItem;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+export const updateCart = async (itemId, cartData) => {
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+
+    const { quantity, price, addOns = [] } = cartData;
+
+    // pass client correctly
+    const cartItem = await model.findCartItem(client, itemId);
+    if (!cartItem) throw new Error("Cart item not found");
+
+    // price from body is the unit price; pass it as unitPrice
+    const newCartItem = await model.updateCartItem(client, itemId, {
+      quantity,
+      unitPrice: price,
+    });
+
+    // Delete all old addons then re-insert
+    await model.deleteAllAddons(client, itemId);
+
+    for (const addOn of addOns) {
+      await model.createCartAddon(client, newCartItem.cart_item_id, {
+        addonId: addOn.id,
+        addonName: addOn.name,
+        addonPrice: addOn.price,
+      });
+    }
+
+    await client.query("COMMIT");
+
+    // return newCartItem, not the stale cartItem
     return newCartItem;
   } catch (error) {
     await client.query("ROLLBACK");

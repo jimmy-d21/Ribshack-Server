@@ -41,3 +41,20 @@ export const addToCart = async (req, res) => {
       .json({ success: false, message: error.message });
   }
 };
+
+export const updateCart = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const updatedCart = await service.updateCart(itemId, req.body);
+
+    return res.status(200).json({
+      success: true,
+      message: "Item updated successfully",
+      updatedCart,
+    });
+  } catch (error) {
+    return res
+      .status(resolveStatus(error.message))
+      .json({ success: false, message: error.message });
+  }
+};

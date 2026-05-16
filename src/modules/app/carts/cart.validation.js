@@ -41,3 +41,32 @@ export const addToCart = (req, res, next) => {
 
   next();
 };
+
+export const updateCart = (req, res, next) => {
+  const { quantity, price, addOns } = req.body;
+  const { itemId } = req.params;
+
+  if (!itemId || isNaN(itemId) || Number(itemId) <= 0) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid cart item ID" });
+  }
+
+  if (!quantity || isNaN(quantity) || Number(quantity) <= 0) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid quantity" });
+  }
+
+  if (!price || isNaN(price) || Number(price) <= 0) {
+    return res.status(400).json({ success: false, message: "Invalid price" });
+  }
+
+  if (addOns !== undefined && !Array.isArray(addOns)) {
+    return res
+      .status(400)
+      .json({ success: false, message: "addOns must be an array" });
+  }
+
+  next();
+};
