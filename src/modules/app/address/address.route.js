@@ -4,6 +4,7 @@ import * as controller from "./address.controller.js";
 
 const router = express.Router();
 
+router.get("/", validate.getAllAddress, controller.getAllAddress);
 router.post("/", validate.addAddress, controller.addAddress);
 
 export default router;

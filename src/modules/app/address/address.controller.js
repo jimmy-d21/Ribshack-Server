@@ -14,6 +14,22 @@ const resolveStatus = (message = "") => {
   return 500;
 };
 
+export const getAllAddress = async (req, res) => {
+  try {
+    const userId = req.authUser.id;
+    const addresses = await service.getAllAddress(userId);
+
+    return res.status(200).json({
+      success: true,
+      addresses,
+    });
+  } catch (error) {
+    return res
+      .status(resolveStatus(error.message))
+      .json({ success: false, message: error.message });
+  }
+};
+
 export const addAddress = async (req, res) => {
   try {
     const userId = req.authUser.id;
@@ -22,7 +38,7 @@ export const addAddress = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Address added successfully",
-      data: newAddress,
+      newAddress,
     });
   } catch (error) {
     return res
