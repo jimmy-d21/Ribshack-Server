@@ -70,3 +70,15 @@ export const updateCart = (req, res, next) => {
 
   next();
 };
+
+export const deleteCartItem = (req, res, next) => {
+  const { itemId } = req.params;
+
+  if (!itemId || isNaN(itemId) || Number(itemId) <= 0) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid cart item ID" });
+  }
+
+  next();
+};

@@ -183,6 +183,16 @@ class AppCartModel {
     ]);
     return rows[0];
   }
+
+  async deleteCartItem(cartItemId) {
+    const sql = `
+      DELETE FROM cart_items
+      WHERE  cart_item_id = $1
+      RETURNING cart_item_id, cart_id, product_id, quantity, unit_price
+    `;
+    const { rows } = await db.query(sql, [cartItemId]);
+    return rows[0];
+  }
 }
 
 export const appCartModel = new AppCartModel();

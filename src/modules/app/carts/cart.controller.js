@@ -58,3 +58,20 @@ export const updateCart = async (req, res) => {
       .json({ success: false, message: error.message });
   }
 };
+
+export const deleteCartItem = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const deletedItem = await service.deleteCartItem(itemId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Item deleted successfully",
+      deletedItem,
+    });
+  } catch (error) {
+    return res
+      .status(resolveStatus(error.message))
+      .json({ success: false, message: error.message });
+  }
+};

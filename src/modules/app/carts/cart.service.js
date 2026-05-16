@@ -84,3 +84,10 @@ export const updateCart = async (itemId, cartData) => {
     client.release();
   }
 };
+export const deleteCartItem = async (itemId) => {
+  const cartItem = await model.findCartItem(db, itemId);
+  if (!cartItem) throw new Error("Cart item not found");
+
+  const deletedItem = await model.deleteCartItem(itemId);
+  return deletedItem;
+};
