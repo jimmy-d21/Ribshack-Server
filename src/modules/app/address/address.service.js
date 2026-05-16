@@ -13,11 +13,15 @@ export const getAddressDetails = async (addressId) => {
 };
 
 export const addAddress = async (userId, addressData) => {
-  const { label, fullAddress, city, province, postalCode, landMark } =
-    addressData;
-
-  const existingAddresses = await model.findAddressesByUserId(userId);
-  const isDefault = existingAddresses.length === 0;
+  const {
+    label,
+    fullAddress,
+    city,
+    province,
+    postalCode,
+    landMark,
+    isDefault,
+  } = addressData;
 
   const newAddress = await model.createAddress(userId, {
     label,

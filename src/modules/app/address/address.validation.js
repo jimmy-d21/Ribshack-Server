@@ -1,5 +1,5 @@
 export const addAddress = (req, res, next) => {
-  const { label, fullAddress, city, province, postalCode, landMark } = req.body;
+  const { label, fullAddress, city, province, postalCode } = req.body;
 
   if (
     !fullAddress ||
@@ -46,16 +46,6 @@ export const addAddress = (req, res, next) => {
     return res.status(400).json({
       success: false,
       message: "Postal code must be a non-empty text",
-    });
-  }
-
-  if (
-    landMark !== undefined &&
-    (typeof landMark !== "string" || landMark.trim() === "")
-  ) {
-    return res.status(400).json({
-      success: false,
-      message: "Landmark must be a non-empty text",
     });
   }
 
