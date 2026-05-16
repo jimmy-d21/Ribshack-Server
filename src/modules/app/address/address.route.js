@@ -11,5 +11,6 @@ router.get(
   controller.getAddressDetails,
 );
 router.post("/", validate.addAddress, controller.addAddress);
+router.put("/:addressId", validate.updateAddress, controller.updateAddress);
 
 export default router;

@@ -77,3 +77,71 @@ export const getAddressDetails = (req, res, next) => {
 
   next();
 };
+
+export const updateAddress = (req, res, next) => {
+  const {
+    label,
+    fullAddress,
+    city,
+    province,
+    postalCode,
+    landMark,
+    isDefault,
+  } = req.body;
+
+  if (
+    fullAddress !== undefined &&
+    (typeof fullAddress !== "string" || fullAddress.trim() === "")
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Full address must be a non-empty text",
+    });
+  }
+
+  if (city !== undefined && (typeof city !== "string" || city.trim() === "")) {
+    return res.status(400).json({
+      success: false,
+      message: "City must be a non-empty text",
+    });
+  }
+
+  if (
+    label !== undefined &&
+    (typeof label !== "string" || label.trim() === "")
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Address label must be a non-empty text",
+    });
+  }
+
+  if (
+    province !== undefined &&
+    (typeof province !== "string" || province.trim() === "")
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Province must be a non-empty text",
+    });
+  }
+
+  if (
+    postalCode !== undefined &&
+    (typeof postalCode !== "string" || postalCode.trim() === "")
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Postal code must be a non-empty text",
+    });
+  }
+
+  if (isDefault !== undefined && typeof isDefault !== "boolean") {
+    return res.status(400).json({
+      success: false,
+      message: "isDefault must be a boolean",
+    });
+  }
+
+  next();
+};

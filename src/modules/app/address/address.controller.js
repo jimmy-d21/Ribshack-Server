@@ -63,3 +63,25 @@ export const addAddress = async (req, res) => {
       .json({ success: false, message: error.message });
   }
 };
+
+export const updateAddress = async (req, res) => {
+  try {
+    const { addressId } = req.params;
+    const userId = req.authUser.id;
+    const updatedAddress = await service.updateAddress(
+      addressId,
+      userId,
+      req.body,
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Address updated successfully",
+      updatedAddress,
+    });
+  } catch (error) {
+    return res
+      .status(resolveStatus(error.message))
+      .json({ success: false, message: error.message });
+  }
+};
