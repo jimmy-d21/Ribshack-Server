@@ -141,6 +141,25 @@ class AppAddressModel {
     const sql = `DELETE FROM customer_addresses WHERE address_id = $1`;
     await db.query(sql, [addressId]);
   }
+
+  async setDefaultAddress(addressId) {
+    const sql = `UPDATE customer_addresses
+                 SET is_default = TRUE
+                 WHERE address_id = $1
+                 RETURNING
+                    address_id    AS "id",
+                    address_label AS "label",
+                    full_address  AS "fullAddress",
+                    city,
+                    province,
+                    postal_code   AS "postalCode",
+                    land_mark     AS "landMark",
+                    is_default    AS "isDefault",
+                    created_at    AS "createdAt",
+                    updated_at    AS "updatedAt" `;
+    const { rows } = await db.query(sql, [addressId]);
+    return rows[0];
+  }
 }
 
 export const appAddressModel = new AppAddressModel();

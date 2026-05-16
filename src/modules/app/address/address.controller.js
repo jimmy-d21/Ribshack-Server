@@ -102,3 +102,22 @@ export const deleteAddress = async (req, res) => {
       .json({ success: false, message: error.message });
   }
 };
+
+export const setDefaultAddress = async (req, res) => {
+  try {
+    const { addressId } = req.params;
+    const userId = req.authUser.id;
+
+    const defaultAddress = await service.setDefaultAddress(addressId, userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Address default successfully",
+      defaultAddress,
+    });
+  } catch (error) {
+    return res
+      .status(resolveStatus(error.message))
+      .json({ success: false, message: error.message });
+  }
+};

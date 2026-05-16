@@ -158,3 +158,16 @@ export const deleteAddress = (req, res, next) => {
 
   next();
 };
+
+export const setDefaultAddress = (req, res, next) => {
+  const { addressId } = req.params;
+
+  if (!addressId || isNaN(addressId) || Number(addressId) <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid address ID",
+    });
+  }
+
+  next();
+};

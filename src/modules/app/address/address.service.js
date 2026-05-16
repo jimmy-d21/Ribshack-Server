@@ -77,3 +77,13 @@ export const deleteAddress = async (addressId) => {
 
   await model.deleteAddress(addressId);
 };
+
+export const setDefaultAddress = async (addressId, userId) => {
+  const address = await model.findAddressById(addressId);
+  if (!address) throw new Error("Address not found");
+
+  // Set all user address into false except the addressId
+  await model.updateAllAddressDefault(userId, addressId);
+
+  return await model.setDefaultAddress(addressId);
+};

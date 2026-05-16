@@ -13,5 +13,10 @@ router.get(
 router.post("/", validate.addAddress, controller.addAddress);
 router.put("/:addressId", validate.updateAddress, controller.updateAddress);
 router.delete("/:addressId", validate.deleteAddress, controller.deleteAddress);
+router.patch(
+  "/:addressId/default",
+  validate.setDefaultAddress,
+  controller.setDefaultAddress,
+);
 
 export default router;
