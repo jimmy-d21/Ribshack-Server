@@ -1,84 +1,27 @@
-export const addAddress = (req, res, next) => {
-  const { label, fullAddress, city, province, postalCode } = req.body;
-
-  if (
-    !fullAddress ||
-    typeof fullAddress !== "string" ||
-    fullAddress.trim() === ""
-  ) {
-    return res.status(400).json({
-      success: false,
-      message: "Full address is required",
-    });
-  }
-
-  if (!city || typeof city !== "string" || city.trim() === "") {
-    return res.status(400).json({
-      success: false,
-      message: "City is required",
-    });
-  }
-
-  if (
-    label !== undefined &&
-    (typeof label !== "string" || label.trim() === "")
-  ) {
-    return res.status(400).json({
-      success: false,
-      message: "Address label must be a non-empty text",
-    });
-  }
-
-  if (
-    province !== undefined &&
-    (typeof province !== "string" || province.trim() === "")
-  ) {
-    return res.status(400).json({
-      success: false,
-      message: "Province must be a non-empty text",
-    });
-  }
-
-  if (
-    postalCode !== undefined &&
-    (typeof postalCode !== "string" || postalCode.trim() === "")
-  ) {
-    return res.status(400).json({
-      success: false,
-      message: "Postal code must be a non-empty text",
-    });
-  }
-
-  next();
-};
+const isValidId = (id) => id && !isNaN(id) && Number(id) > 0;
 
 export const getAllAddress = (req, res, next) => {
-  const userId = req.authUser?.id;
-
-  if (!userId || isNaN(userId) || Number(userId) <= 0) {
-    return res.status(401).json({
-      success: false,
-      message: "Unauthorized",
-    });
+  if (!isValidId(req.authUser?.id)) {
+    return res
+      .status(401)
+      .json({ success: false, message: "Unauthorized access" });
   }
-
   next();
 };
 
 export const getAddressDetails = (req, res, next) => {
-  const { addressId } = req.params;
-
-  if (!addressId || isNaN(addressId) || Number(addressId) <= 0) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid address ID",
-    });
+  if (!isValidId(req.params.addressId)) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid address ID" });
   }
-
   next();
 };
 
-export const updateAddress = (req, res, next) => {
+export const deleteAddress = getAddressDetails;
+export const setDefaultAddress = getAddressDetails;
+
+export const addAddress = (req, res, next) => {
   const {
     label,
     fullAddress,
@@ -89,85 +32,53 @@ export const updateAddress = (req, res, next) => {
     isDefault,
   } = req.body;
 
-  if (
-    fullAddress !== undefined &&
-    (typeof fullAddress !== "string" || fullAddress.trim() === "")
-  ) {
-    return res.status(400).json({
-      success: false,
-      message: "Full address must be a non-empty text",
-    });
+  if (!fullAddress || typeof fullAddress !== "string" || !fullAddress.trim()) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Full address is required" });
   }
-
-  if (city !== undefined && (typeof city !== "string" || city.trim() === "")) {
-    return res.status(400).json({
-      success: false,
-      message: "City must be a non-empty text",
-    });
+  if (!city || typeof city !== "string" || !city.trim()) {
+    return res
+      .status(400)
+      .json({ success: false, message: "City is required" });
   }
-
-  if (
-    label !== undefined &&
-    (typeof label !== "string" || label.trim() === "")
-  ) {
+  if (label !== undefined && (typeof label !== "string" || !label.trim())) {
     return res.status(400).json({
       success: false,
       message: "Address label must be a non-empty text",
     });
   }
-
   if (
     province !== undefined &&
-    (typeof province !== "string" || province.trim() === "")
+    (typeof province !== "string" || !province.trim())
   ) {
-    return res.status(400).json({
-      success: false,
-      message: "Province must be a non-empty text",
-    });
+    return res
+      .status(400)
+      .json({ success: false, message: "Province must be a non-empty text" });
   }
-
   if (
     postalCode !== undefined &&
-    (typeof postalCode !== "string" || postalCode.trim() === "")
+    (typeof postalCode !== "string" || !postalCode.trim())
   ) {
     return res.status(400).json({
       success: false,
       message: "Postal code must be a non-empty text",
     });
   }
-
   if (isDefault !== undefined && typeof isDefault !== "boolean") {
-    return res.status(400).json({
-      success: false,
-      message: "isDefault must be a boolean",
-    });
+    return res
+      .status(400)
+      .json({ success: false, message: "isDefault must be a boolean value" });
   }
 
   next();
 };
 
-export const deleteAddress = (req, res, next) => {
-  const { addressId } = req.params;
-
-  if (!addressId || isNaN(addressId) || Number(addressId) <= 0) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid address ID",
-    });
+export const updateAddress = (req, res, next) => {
+  if (!isValidId(req.params.addressId)) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid address ID" });
   }
-
-  next();
-};
-
-export const setDefaultAddress = (req, res, next) => {
-  const { addressId } = req.params;
-
-  if (!addressId || isNaN(addressId) || Number(addressId) <= 0) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid address ID",
-    });
-  }
-
-  next();
+  return addAddress(req, res, next);
 };

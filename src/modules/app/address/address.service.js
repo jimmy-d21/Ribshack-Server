@@ -1,39 +1,23 @@
 import { appAddressModel as model } from "./address.model.js";
 
 export const getAllAddress = async (userId) => {
-  const addresses = await model.findAddressesByUserId(userId);
-  return addresses;
+  return await model.findAddressesByUserId(userId);
 };
 
-export const getAddressDetails = async (addressId) => {
-  const address = await model.findAddressById(addressId);
+export const getAddressDetails = async (addressId, userId) => {
+  const address = await model.findAddressByIdAndUser(addressId, userId);
   if (!address) throw new Error("Address not found");
-
   return address;
 };
 
 export const addAddress = async (userId, addressData) => {
-  const {
-    label,
-    fullAddress,
-    city,
-    province,
-    postalCode,
-    landMark,
-    isDefault,
-  } = addressData;
+  const isDefault = addressData.isDefault || false;
 
   const newAddress = await model.createAddress(userId, {
-    label,
-    fullAddress,
-    city,
-    province,
-    postalCode,
-    landMark,
+    ...addressData,
     isDefault,
   });
 
-  // Set all user address into false except the addressId
   if (isDefault) {
     await model.updateAllAddressDefault(userId, newAddress.id);
   }
@@ -42,48 +26,43 @@ export const addAddress = async (userId, addressData) => {
 };
 
 export const updateAddress = async (addressId, userId, addressData) => {
-  const {
-    label,
-    fullAddress,
-    city,
-    province,
-    postalCode,
-    landMark,
-    isDefault,
-  } = addressData;
-
-  const existingAddress = await model.findAddressById(addressId);
+  const existingAddress = await model.findAddressByIdAndUser(addressId, userId);
   if (!existingAddress) throw new Error("Address not found");
 
-  // Set all user address into false except the addressId
-  await model.updateAllAddressDefault(userId, addressId);
+  const shouldBeDefault =
+    addressData.isDefault !== undefined
+      ? addressData.isDefault
+      : existingAddress.isDefault;
 
-  const updatedAddress = await model.updateAddress(addressId, {
-    label: label || existingAddress.label,
-    fullAddress: fullAddress || existingAddress.fullAddress,
-    landMark,
-    city: city || existingAddress.city,
-    province: province || existingAddress.province,
-    postalCode: postalCode || existingAddress.postalCode,
-    isDefault,
+  if (shouldBeDefault) {
+    await model.updateAllAddressDefault(userId, addressId);
+  }
+
+  return await model.updateAddress(addressId, userId, {
+    label: addressData.label || existingAddress.label,
+    fullAddress: addressData.fullAddress || existingAddress.fullAddress,
+    landMark:
+      addressData.landMark !== undefined
+        ? addressData.landMark
+        : existingAddress.landMark,
+    city: addressData.city || existingAddress.city,
+    province: addressData.province || existingAddress.province,
+    postalCode: addressData.postalCode || existingAddress.postalCode,
+    isDefault: shouldBeDefault,
   });
-
-  return updatedAddress;
 };
 
-export const deleteAddress = async (addressId) => {
-  const address = await model.findAddressById(addressId);
+export const deleteAddress = async (addressId, userId) => {
+  const address = await model.findAddressByIdAndUser(addressId, userId);
   if (!address) throw new Error("Address not found");
 
-  await model.deleteAddress(addressId);
+  await model.deleteAddress(addressId, userId);
 };
 
 export const setDefaultAddress = async (addressId, userId) => {
-  const address = await model.findAddressById(addressId);
+  const address = await model.findAddressByIdAndUser(addressId, userId);
   if (!address) throw new Error("Address not found");
 
-  // Set all user address into false except the addressId
   await model.updateAllAddressDefault(userId, addressId);
-
-  return await model.setDefaultAddress(addressId);
+  return await model.setDefaultAddress(addressId, userId);
 };

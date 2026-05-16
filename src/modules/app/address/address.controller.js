@@ -33,8 +33,9 @@ export const getAllAddress = async (req, res) => {
 export const getAddressDetails = async (req, res) => {
   try {
     const { addressId } = req.params;
+    const userId = req.authUser.id;
 
-    const address = await service.getAddressDetails(addressId);
+    const address = await service.getAddressDetails(addressId, userId);
 
     return res.status(200).json({
       success: true,
@@ -89,8 +90,9 @@ export const updateAddress = async (req, res) => {
 export const deleteAddress = async (req, res) => {
   try {
     const { addressId } = req.params;
+    const userId = req.authUser.id;
 
-    await service.deleteAddress(addressId);
+    await service.deleteAddress(addressId, userId);
 
     return res.status(200).json({
       success: true,
