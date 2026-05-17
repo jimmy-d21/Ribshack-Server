@@ -1,4 +1,5 @@
 import db from "../../../config/db.js";
+
 class AppOrderModel {
   async findAll(client = db, userId) {
     const sql = `
@@ -121,6 +122,76 @@ class AppOrderModel {
     return rows;
   }
 
+  async findOrderById(orderId, userId) {
+    const sql = `
+      SELECT
+        o.order_id       AS "id",
+        o.order_status   AS "status",
+        o.total_amount   AS "totalAmount",
+        o.payment_method AS "paymentMethod",
+        o.placed_at      AS "placedAt",
+        dd.full_address  AS "fullAddress",
+        (
+          SELECT COALESCE(JSON_AGG(
+            JSON_BUILD_OBJECT(
+              'orderItemId', oi.order_item_id,
+              'productId',   oi.product_id,
+              'name',        p.product_name,
+              'image',       pi.image_url,
+              'quantity',    oi.quantity,
+              'unitPrice',   oi.unit_price,
+              'addonsTotal', oi.addons_total,
+              'subtotal',    oi.subtotal,
+              'addons', (
+                SELECT JSON_BUILD_OBJECT(
+                  'drinks', (
+                    SELECT COALESCE(JSON_AGG(
+                      JSON_BUILD_OBJECT(
+                        'id',    oia.order_addon_id,
+                        'name',  oia.addon_name,
+                        'price', oia.addon_price
+                      )
+                    ), '[]'::json)
+                    FROM order_item_addons oia
+                    JOIN product_addons pa ON oia.addon_id = pa.addon_id
+                    WHERE oia.order_item_id = oi.order_item_id
+                      AND pa.addon_type = 'drink'
+                  ),
+                  'extras', (
+                    SELECT COALESCE(JSON_AGG(
+                      JSON_BUILD_OBJECT(
+                        'id',    oia.order_addon_id,
+                        'name',  oia.addon_name,
+                        'price', oia.addon_price
+                      )
+                    ), '[]'::json)
+                    FROM order_item_addons oia
+                    JOIN product_addons pa ON oia.addon_id = pa.addon_id
+                    WHERE oia.order_item_id = oi.order_item_id
+                      AND pa.addon_type = 'extra'
+                  )
+                )
+              )
+            )
+          ), '[]'::json)
+          FROM order_items oi
+          JOIN products p ON oi.product_id = p.product_id
+          JOIN product_images pi
+            ON p.product_id  = pi.product_id
+           AND pi.is_primary = TRUE
+          WHERE oi.order_id = o.order_id
+        )                AS "items"
+      FROM orders o
+      JOIN delivery_details dd ON o.order_id = dd.order_id
+      WHERE o.customer_id = $1  -- ✅ $1 = userId
+        AND o.order_id    = $2  -- ✅ $2 = orderId
+    `;
+
+    // ✅ fixed param order: userId first, orderId second — matches $1, $2
+    const { rows } = await db.query(sql, [userId, orderId]);
+    return rows[0] ?? null;
+  }
+
   async findAddressesByUserId(client = db, userId) {
     const sql = `
       SELECT
@@ -140,6 +211,8 @@ class AppOrderModel {
     const { rows } = await client.query(sql, [userId]);
     return rows[0] ?? null;
   }
+
+  // ─── Create Order ──────────────────────────────────────────────────────────
 
   async createOrder(client, userId, branchId, totalAmount, paymentMethod) {
     const sql = `
@@ -232,6 +305,25 @@ class AppOrderModel {
         amount_paid    AS "amountPaid"
     `;
     const { rows } = await client.query(sql, [orderId, paymentMethod, amount]);
+    return rows[0];
+  }
+
+  async createDeliveryOrder(client, orderId, addressId, fullAddress, city) {
+    const sql = `
+      INSERT INTO delivery_details
+        (order_id, address_id, full_address, city)
+      VALUES ($1, $2, $3, $4)
+      RETURNING
+        delivery_id  AS "deliveryId",
+        full_address AS "fullAddress",
+        city
+    `;
+    const { rows } = await client.query(sql, [
+      orderId,
+      addressId,
+      fullAddress,
+      city,
+    ]);
     return rows[0];
   }
 

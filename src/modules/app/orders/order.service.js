@@ -1,6 +1,18 @@
 import db from "../../../config/db.js";
 import { appOrdersModel as model } from "./order.model.js";
 
+export const getAllOrders = async (userId) => {
+  const orders = await model.findAllOrders(userId);
+  return orders;
+};
+
+export const getOrderDetails = async (orderId, userId) => {
+  const order = await model.findOrderById(orderId, userId);
+  if (!order) throw new Error("Order not found");
+
+  return order;
+};
+
 export const createOrder = async (userId, orderData) => {
   const client = await db.connect();
   try {
@@ -8,15 +20,12 @@ export const createOrder = async (userId, orderData) => {
 
     const { paymentMethod, branchId, instructions } = orderData;
 
-    // Validate cart is not empty
     const carts = await model.findAll(client, userId);
     if (carts.length === 0) throw new Error("Cart is empty");
 
-    // Validate default address exists
     const address = await model.findAddressesByUserId(client, userId);
     if (!address) throw new Error("Please add a delivery address first");
 
-    // Correctly compute total — sum of (item price + all addon prices) per cart item
     const totalAmount = carts.reduce((sum, item) => {
       const drinksTotal = item.addons.drinks.reduce(
         (acc, addon) => acc + Number(addon.price),
@@ -29,7 +38,6 @@ export const createOrder = async (userId, orderData) => {
       return sum + Number(item.price) + drinksTotal + extrasTotal;
     }, 0);
 
-    // Create the order
     const newOrder = await model.createOrder(
       client,
       userId,
@@ -38,7 +46,6 @@ export const createOrder = async (userId, orderData) => {
       paymentMethod,
     );
 
-    // Create order items and their addons
     for (const cart of carts) {
       const drinksTotal = cart.addons.drinks.reduce(
         (acc, addon) => acc + Number(addon.price),
@@ -49,7 +56,6 @@ export const createOrder = async (userId, orderData) => {
         0,
       );
 
-      // Correctly compute per-item values
       const addonsTotal = drinksTotal + extrasTotal;
       const unitPrice = Number(cart.price) / cart.quantity;
       const subtotal = Number(cart.price) + addonsTotal;
@@ -64,7 +70,6 @@ export const createOrder = async (userId, orderData) => {
         subtotal,
       );
 
-      // Insert order item addons — drinks
       for (const addon of cart.addons.drinks) {
         await model.createOrderItemAddon(client, orderItem.orderItemId, {
           addonId: addon.id,
@@ -73,7 +78,6 @@ export const createOrder = async (userId, orderData) => {
         });
       }
 
-      // Insert order item addons — extras
       for (const addon of cart.addons.extras) {
         await model.createOrderItemAddon(client, orderItem.orderItemId, {
           addonId: addon.id,
@@ -83,7 +87,6 @@ export const createOrder = async (userId, orderData) => {
       }
     }
 
-    // Create payment record
     await model.createOrderPayment(
       client,
       newOrder.orderId,
@@ -91,7 +94,6 @@ export const createOrder = async (userId, orderData) => {
       totalAmount,
     );
 
-    // Only create instruction if provided
     if (instructions && instructions.trim() !== "") {
       await model.createOrderInstruction(
         client,
@@ -100,7 +102,14 @@ export const createOrder = async (userId, orderData) => {
       );
     }
 
-    // Clear the cart after successful order
+    await model.createDeliveryOrder(
+      client,
+      newOrder.orderId,
+      address.id,
+      address.fullAddress,
+      address.city,
+    );
+
     await model.clearCart(client, userId);
 
     await client.query("COMMIT");
@@ -111,9 +120,4 @@ export const createOrder = async (userId, orderData) => {
   } finally {
     client.release();
   }
-};
-
-export const getAllOrders = async (userId) => {
-  const orders = await model.findAllOrders(userId);
-  return orders;
 };
