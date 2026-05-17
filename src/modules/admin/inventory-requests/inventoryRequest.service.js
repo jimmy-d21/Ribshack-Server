@@ -13,7 +13,10 @@ export const AdminInventoryRequestService = {
     try {
       await client.query("BEGIN");
 
-      const request = await model.findById(client, requestId);
+      const request = await adminInventoryRequestModel.findById(
+        client,
+        requestId,
+      );
 
       if (!request) {
         throw new Error("Inventory request not found");
@@ -25,9 +28,31 @@ export const AdminInventoryRequestService = {
         );
       }
 
-      await model.createStatusLogs(client, requestId, status, adminId, remarks);
+      if (status === "APPROVED" && request.items && request.items.length > 0) {
+        for (const lineItem of request.items) {
+          if (!lineItem.item_id || !lineItem.quantity) continue;
 
-      const result = await model.updateStatus(client, requestId, status);
+          await adminInventoryRequestModel.incrementItemQuantity(
+            client,
+            lineItem.item_id,
+            lineItem.quantity,
+          );
+        }
+      }
+
+      await adminInventoryRequestModel.createStatusLogs(
+        client,
+        requestId,
+        status,
+        adminId,
+        remarks,
+      );
+
+      const result = await adminInventoryRequestModel.updateStatus(
+        client,
+        requestId,
+        status,
+      );
 
       await client.query("COMMIT");
       return result;

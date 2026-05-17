@@ -22,7 +22,7 @@ export const AdminInventoryRequestController = {
       const { remarks } = req.body;
       const adminId = req.authUser.id;
 
-      const updatedRequest = await service.approveRequest(
+      const updatedRequest = await AdminInventoryRequestService.approveRequest(
         requestId,
         remarks,
         adminId,
@@ -30,7 +30,8 @@ export const AdminInventoryRequestController = {
 
       return res.status(200).json({
         success: true,
-        message: "Inventory request approved successfully",
+        message:
+          "Inventory request approved and store inventory updated successfully",
         data: updatedRequest,
       });
     } catch (error) {

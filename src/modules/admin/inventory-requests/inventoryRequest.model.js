@@ -113,6 +113,17 @@ class AdminInventoryRequestModel {
     const { rows } = await client.query(sql, [requestId]);
     return rows[0];
   }
+
+  async incrementItemQuantity(client, itemId, quantity) {
+    const sql = `
+      UPDATE inventory_items 
+      SET current_quantity = current_quantity + $1
+      WHERE item_id = $2
+      RETURNING item_id, item_name, current_quantity;
+    `;
+    const { rows } = await client.query(sql, [quantity, itemId]);
+    return rows[0];
+  }
 }
 
 export const adminInventoryRequestModel = new AdminInventoryRequestModel();
