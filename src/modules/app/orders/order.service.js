@@ -112,3 +112,8 @@ export const createOrder = async (userId, orderData) => {
     client.release();
   }
 };
+
+export const getAllOrders = async (userId) => {
+  const orders = await model.findAllOrders(userId);
+  return orders;
+};

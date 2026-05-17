@@ -4,6 +4,7 @@ import * as validate from "./order.validation.js";
 
 const router = express.Router();
 
+router.get("/", validate.getAllOrders, controller.getAllOrders);
 router.post("/checkout", validate.createOrder, controller.createOrder);
 
 export default router;
