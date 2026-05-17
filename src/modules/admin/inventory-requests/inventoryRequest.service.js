@@ -1,10 +1,9 @@
 import db from "../../../config/db.js";
-import { adminInventoryRequestModel as model } from "./inventoryRequest.model.js";
+import { adminInventoryRequestModel as model } from "./inventoryRequest.model.js"; // Standardized import target
 
 export const AdminInventoryRequestService = {
   getAllRequests: async (status = null) => {
-    const inventoryRequests = await model.findAll(status);
-    return inventoryRequests;
+    return await model.findAll(status);
   },
 
   updateRequestStatus: async (requestId, remarks, adminId, status) => {
@@ -13,10 +12,7 @@ export const AdminInventoryRequestService = {
     try {
       await client.query("BEGIN");
 
-      const request = await adminInventoryRequestModel.findById(
-        client,
-        requestId,
-      );
+      const request = await model.findById(client, requestId);
 
       if (!request) {
         throw new Error("Inventory request not found");
@@ -28,11 +24,12 @@ export const AdminInventoryRequestService = {
         );
       }
 
+      // Safe stock rebalancing conditional checks
       if (status === "APPROVED" && request.items && request.items.length > 0) {
         for (const lineItem of request.items) {
           if (!lineItem.item_id || !lineItem.quantity) continue;
 
-          await adminInventoryRequestModel.incrementItemQuantity(
+          await model.incrementItemQuantity(
             client,
             lineItem.item_id,
             lineItem.quantity,
@@ -40,19 +37,9 @@ export const AdminInventoryRequestService = {
         }
       }
 
-      await adminInventoryRequestModel.createStatusLogs(
-        client,
-        requestId,
-        status,
-        adminId,
-        remarks,
-      );
+      await model.createStatusLogs(client, requestId, status, adminId, remarks);
 
-      const result = await adminInventoryRequestModel.updateStatus(
-        client,
-        requestId,
-        status,
-      );
+      const result = await model.updateStatus(client, requestId, status);
 
       await client.query("COMMIT");
       return result;

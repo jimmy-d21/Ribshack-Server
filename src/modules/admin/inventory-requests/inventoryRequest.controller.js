@@ -4,7 +4,6 @@ export const AdminInventoryRequestController = {
   getAllRequests: async (req, res) => {
     try {
       const { status } = req.query;
-
       const inventoryRequests = await service.getAllRequests(status);
 
       return res.status(200).json({
@@ -22,7 +21,7 @@ export const AdminInventoryRequestController = {
       const { remarks } = req.body;
       const adminId = req.authUser.id;
 
-      const updatedRequest = await AdminInventoryRequestService.approveRequest(
+      const updatedRequest = await service.approveRequest(
         requestId,
         remarks,
         adminId,
