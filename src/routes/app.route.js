@@ -5,6 +5,7 @@ import appHomeRoutes from "../modules/app/home/home.route.js";
 import appProductRoutes from "../modules/app/products/product.route.js";
 import appCartRoutes from "../modules/app/carts/cart.route.js";
 import appAddressRoutes from "../modules/app/address/address.route.js";
+import appOrdersRoutes from "../modules/app/orders/order.route.js";
 import verifyToken, { authorizeRoles } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
@@ -30,5 +31,6 @@ router.use(
   authorizeRoles("customer"),
   appAddressRoutes,
 );
+router.use("/orders", verifyToken, authorizeRoles("customer"), appOrdersRoutes);
 
 export default router;
