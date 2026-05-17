@@ -1,25 +1,39 @@
 import db from "../../../config/db.js";
 
 class AdminBranchesModel {
-  // Todo: get the dailyRevenue, orders
   async findAll() {
-    const sql = `
-      SELECT
-        b.branch_id AS id,
-        b.branch_name AS name,
-        b.full_address AS location,
-        b.city,
-        br.region_id,
-        br.region_name AS region,
-        b.manager_name AS manager,
-        b.contact_number AS phone,
-        b.username,
-        b.is_open AS status,
-        b.created_at
-      FROM branches b
-      JOIN branches_regions br ON b.region_id = br.region_id
-      ORDER BY b.created_at DESC
-    `;
+    const sql = `SELECT
+                  b.branch_id AS id,
+                  b.branch_name AS name,
+                  b.full_address AS location,
+                  b.city,
+                  br.region_id,
+                  br.region_name AS region,
+                  b.manager_name AS manager,
+                  b.contact_number AS phone,
+                  b.username,
+                  b.is_open AS status,
+                  b.created_at,
+                  JSON_BUILD_OBJECT(
+                    'total_revenue', COALESCE(
+                      (
+                        SELECT SUM(o.total_amount)
+                        FROM orders o
+                        WHERE o.placed_at::date = CURRENT_DATE 
+                          AND o.branch_id = b.branch_id
+                          AND o.order_status != 'CANCELLED' 
+                      ), 0.00
+                    ),
+                    'orders_today', (
+                      SELECT COUNT(*)
+                      FROM orders o  
+                      WHERE o.placed_at::date = CURRENT_DATE 
+                        AND o.branch_id = b.branch_id
+                    )
+                  ) AS branch_details
+                FROM branches b
+                JOIN branches_regions br ON b.region_id = br.region_id
+                ORDER BY b.created_at DESC`;
     const { rows } = await db.query(sql);
     return rows;
   }
