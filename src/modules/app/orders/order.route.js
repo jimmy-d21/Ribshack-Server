@@ -7,5 +7,6 @@ const router = express.Router();
 router.get("/", validate.getAllOrders, controller.getAllOrders);
 router.get("/:orderId", validate.getOrderDetails, controller.getOrderDetails);
 router.post("/checkout", validate.createOrder, controller.createOrder);
+router.delete("/:orderId", validate.deleteOrder, controller.deleteOrder);
 
 export default router;

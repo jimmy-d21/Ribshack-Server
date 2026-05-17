@@ -9,7 +9,6 @@ export const getAllOrders = async (userId) => {
 export const getOrderDetails = async (orderId, userId) => {
   const order = await model.findOrderById(orderId, userId);
   if (!order) throw new Error("Order not found");
-
   return order;
 };
 
@@ -110,10 +109,37 @@ export const createOrder = async (userId, orderData) => {
       address.city,
     );
 
+    await model.createOrderStatusLogs(client, newOrder.orderId, "PLACED");
+
     await model.clearCart(client, userId);
 
     await client.query("COMMIT");
     return newOrder;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+export const deleteOrder = async (orderId, userId) => {
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+
+    const order = await model.findOrderById(orderId, userId);
+    if (!order) throw new Error("Order not found");
+
+    if (order.status !== "PLACED") {
+      throw new Error("Only placed orders can be cancelled");
+    }
+
+    await model.createOrderStatusLogs(client, orderId, "CANCELLED");
+
+    await model.updateOrderStatus(client, orderId, "CANCELLED");
+
+    await client.query("COMMIT");
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;

@@ -51,3 +51,16 @@ export const createOrder = (req, res, next) => {
 
   next();
 };
+
+export const deleteOrder = (req, res, next) => {
+  const { orderId } = req.params;
+
+  if (!orderId || isNaN(orderId) || Number(orderId) <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid order ID",
+    });
+  }
+
+  next();
+};

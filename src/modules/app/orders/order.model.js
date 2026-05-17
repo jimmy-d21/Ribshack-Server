@@ -183,11 +183,9 @@ class AppOrderModel {
         )                AS "items"
       FROM orders o
       JOIN delivery_details dd ON o.order_id = dd.order_id
-      WHERE o.customer_id = $1  -- ✅ $1 = userId
-        AND o.order_id    = $2  -- ✅ $2 = orderId
+      WHERE o.customer_id = $1
+        AND o.order_id    = $2
     `;
-
-    // ✅ fixed param order: userId first, orderId second — matches $1, $2
     const { rows } = await db.query(sql, [userId, orderId]);
     return rows[0] ?? null;
   }
@@ -211,8 +209,6 @@ class AppOrderModel {
     const { rows } = await client.query(sql, [userId]);
     return rows[0] ?? null;
   }
-
-  // ─── Create Order ──────────────────────────────────────────────────────────
 
   async createOrder(client, userId, branchId, totalAmount, paymentMethod) {
     const sql = `
@@ -329,17 +325,34 @@ class AppOrderModel {
 
   async createOrderInstruction(client, orderId, message) {
     const sql = `
-      INSERT INTO order_instructions
-        (order_id, instruction_text)
+      INSERT INTO order_instructions (order_id, instruction_text)
       VALUES ($1, $2)
     `;
     await client.query(sql, [orderId, message]);
   }
 
+  async createOrderStatusLogs(client, orderId, status) {
+    const sql = `
+      INSERT INTO order_status_logs (order_id, status)
+      VALUES ($1, $2)
+    `;
+    await client.query(sql, [orderId, status]);
+  }
+
+  async updateOrderStatus(client, orderId, status) {
+    const sql = `
+      UPDATE orders
+      SET    order_status = $1,
+             updated_at   = CURRENT_TIMESTAMP
+      WHERE  order_id     = $2
+    `;
+    await client.query(sql, [status, orderId]);
+  }
+
   async clearCart(client, userId) {
     const sql = `
       DELETE FROM carts
-      WHERE  customer_id = $1
+      WHERE customer_id = $1
     `;
     await client.query(sql, [userId]);
   }
