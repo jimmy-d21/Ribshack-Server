@@ -1,9 +1,10 @@
 import db from "../../../config/db.js";
+import AppError from "../../../utils/AppError.js";
 import { storeInventoryModel as model } from "./inventory.model.js";
 
 const validateBranch = async (branchId) => {
-  const branch = await model.findBranchById(branchId); // no longer passing undefined
-  if (!branch) throw new Error("Branch not found");
+  const branch = await model.findBranchById(branchId);
+  if (!branch) throw new AppError("Branch not found", 404);
   return branch;
 };
 
@@ -31,7 +32,7 @@ export const addInventoryItem = async (branchId, inventoryData) => {
 
   const existingItem = await model.findByItemName(branchId, itemName);
   if (existingItem)
-    throw new Error(`"${itemName}" already exists in your inventory`);
+    throw new AppError(`"${itemName}" already exists in your inventory`, 409);
 
   return model.create(branchId, {
     itemName,
@@ -45,7 +46,7 @@ export const addInventoryItem = async (branchId, inventoryData) => {
 
 export const getInventoryDetails = async (inventoryId) => {
   const inventoryItem = await model.findById(inventoryId);
-  if (!inventoryItem) throw new Error("Inventory item not found");
+  if (!inventoryItem) throw new AppError("Inventory item not found", 404);
   return inventoryItem;
 };
 
@@ -60,15 +61,15 @@ export const updateInventory = async (inventoryId, inventoryData) => {
   } = inventoryData;
 
   const existingInventory = await model.findById(inventoryId);
-  if (!existingInventory) throw new Error("Inventory item not found");
+  if (!existingInventory) throw new AppError("Inventory item not found", 404);
 
   if (itemName.toLowerCase() !== existingInventory.itemName.toLowerCase()) {
-    const existingItem = await model.findByItemName(
+    const duplicate = await model.findByItemName(
       existingInventory.branchId,
       itemName,
     );
-    if (existingItem)
-      throw new Error(`"${itemName}" already exists in your inventory`);
+    if (duplicate)
+      throw new AppError(`"${itemName}" already exists in your inventory`, 409);
   }
 
   return model.findByIdAndUpdate(inventoryId, {
@@ -83,10 +84,13 @@ export const updateInventory = async (inventoryId, inventoryData) => {
 
 export const deleteInventory = async (inventoryId, branchId) => {
   const inventoryItem = await model.findById(inventoryId);
-  if (!inventoryItem) throw new Error("Inventory item not found");
+  if (!inventoryItem) throw new AppError("Inventory item not found", 404);
 
   if (branchId.toString() !== inventoryItem.branchId.toString()) {
-    throw new Error("You're not authorized to delete this inventory item");
+    throw new AppError(
+      "You are not authorized to delete this inventory item",
+      403,
+    );
   }
 
   return model.findByIdAndDelete(inventoryId);
@@ -106,11 +110,12 @@ export const inventoryRequest = async (
     await validateBranch(branchId);
 
     const inventoryItem = await model.findById(inventoryId);
-    if (!inventoryItem) throw new Error("Inventory item not found");
+    if (!inventoryItem) throw new AppError("Inventory item not found", 404);
 
     if (branchId.toString() !== inventoryItem.branchId.toString()) {
-      throw new Error(
-        "You're not authorized to request restock for this inventory item",
+      throw new AppError(
+        "You are not authorized to request restock for this inventory item",
+        403,
       );
     }
 

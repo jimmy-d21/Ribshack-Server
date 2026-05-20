@@ -1,22 +1,26 @@
 import express from "express";
 import * as controller from "./inventory.controller.js";
-import * as validate from "./inventory.validation.js";
+import { validate } from "../../../middlewares/validate.middleware.js";
+import {
+  inventoryItemSchema,
+  inventoryRequestSchema,
+} from "./inventory.schema.js";
 
 const router = express.Router();
 
 router.get("/", controller.getAllInventory);
 router.get("/alerts", controller.getAllInventoryCritical);
-router.get(
+router.get("/:itemId", controller.getInventoryDetails);
+router.post("/", validate(inventoryItemSchema), controller.addInventoryItem);
+router.put(
   "/:itemId",
-  validate.getInventoryDetails,
-  controller.getInventoryDetails,
+  validate(inventoryItemSchema),
+  controller.updateInventory,
 );
-router.post("/", validate.addInventoryItem, controller.addInventoryItem);
-router.put("/:itemId", validate.updateInventory, controller.updateInventory);
-router.delete("/:itemId", validate.deleteInventory, controller.deleteInventory);
+router.delete("/:itemId", controller.deleteInventory);
 router.post(
   "/:itemId/restock-request",
-  validate.inventoryRequest,
+  validate(inventoryRequestSchema),
   controller.inventoryRequest,
 );
 
