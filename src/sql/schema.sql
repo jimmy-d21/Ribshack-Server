@@ -288,9 +288,13 @@ CREATE TABLE delivery_details (
     created_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create a sequence that starts at 1
+CREATE SEQUENCE order_number_seq START WITH 1;
+
 -- Master table for all customer orders
 CREATE TABLE orders (
     order_id       SERIAL PRIMARY KEY,
+    order_number VARCHAR(20) DEFAULT ('ORD-' || LPAD(NEXTVAL('order_number_seq')::text, 3, '0')),
     customer_id    INTEGER NOT NULL REFERENCES users(user_id),
     branch_id      INTEGER NOT NULL REFERENCES branches(branch_id),
     order_status   VARCHAR(50) DEFAULT 'PLACED'
@@ -351,4 +355,52 @@ CREATE TABLE order_instructions (
     order_id         INTEGER NOT NULL REFERENCES orders(order_id) ON DELETE CASCADE,
     instruction_text TEXT NOT NULL,
     created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Built exclusively for the customer-facing mobile/web application
+CREATE TABLE app_notifications (
+    notification_id   SERIAL PRIMARY KEY,
+    customer_id       INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    order_id          INTEGER REFERENCES orders(order_id) ON DELETE SET NULL,
+    title             VARCHAR(100) NOT NULL,
+    message           TEXT NOT NULL,
+    notification_type VARCHAR(30) NOT NULL 
+                      CHECK (notification_type IN ('ORDER_ACCEPTED', 'ORDER_PREPARING', 'ORDER_DISPATCHED', 'PROMO')),
+    is_read           BOOLEAN DEFAULT FALSE,
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Built exclusively for internal company management/staff activities
+CREATE TABLE store_notifications (
+    notification_id   SERIAL PRIMARY KEY,
+    branch_id         INTEGER REFERENCES branches(branch_id) ON DELETE CASCADE,
+    target_role       VARCHAR(50), -- e.g., 'ADMIN', 'MANAGER', 'STAFF'
+    title             VARCHAR(100) NOT NULL,
+    message           TEXT NOT NULL,
+    notification_type VARCHAR(30) NOT NULL 
+                      CHECK (notification_type IN ('NEW_ORDER', 'INV_LOW', 'INV_REQUEST', 'SYSTEM_ALERT', 'ACCEPT_REQUEST', 'STAFF_CHECK')),
+    is_read           BOOLEAN DEFAULT FALSE,
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- A single, polymorphic table running both client applications and store backends
+CREATE TABLE system_notifications (
+    notification_id   SERIAL PRIMARY KEY,
+    
+    -- Routing Flags: Explicitly tells the system exactly who owns or gets this alert record
+    recipient_type    VARCHAR(15) NOT NULL CHECK (recipient_type IN ('CUSTOMER', 'STAFF', 'GLOBAL')),
+    customer_id       INTEGER REFERENCES users(user_id) ON DELETE CASCADE, -- Nullable
+    branch_id         INTEGER REFERENCES branches(branch_id) ON DELETE CASCADE,    -- Nullable
+    target_role       VARCHAR(50),                                                 -- Nullable
+    order_id          INTEGER REFERENCES orders(order_id) ON DELETE SET NULL,      -- Nullable
+    
+    title             VARCHAR(100) NOT NULL,
+    message           TEXT NOT NULL,
+    notification_type VARCHAR(30) NOT NULL CHECK (notification_type IN (
+                          'ORDER_ACCEPTED', 'ORDER_PREPARING', 'ORDER_DISPATCHED', -- Customer alerts
+                          'NEW_ORDER', 'INV_LOW', 'INV_REQUEST',                   -- Staff alerts
+                          'APP_MAINTENANCE'                                        -- System alerts
+                      )),
+    is_read           BOOLEAN DEFAULT FALSE,
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
