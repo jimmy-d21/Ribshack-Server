@@ -7,7 +7,6 @@ const PORT = ENV.server.port || 5000;
 (async function startServer() {
   try {
     await checkConnection();
-
     app.listen(PORT, () => {
       console.log(`Server is ready on PORT: ${PORT}`);
     });

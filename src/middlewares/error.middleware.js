@@ -5,7 +5,8 @@ export const notFound = (req, res, next) => {
   next(error);
 };
 
-// Global error handler — catches all errors passed via next(error)
+// Catches all errors forwarded via next(error) and returns a JSON response.
+// AppError instances carry their own statusCode; everything else defaults to 500.
 export const errorHandler = (err, req, res, next) => {
   const statusCode = res.statusCode !== 200 ? res.statusCode : 500;
 
