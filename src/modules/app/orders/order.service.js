@@ -1,14 +1,14 @@
 import db from "../../../config/db.js";
+import AppError from "../../../utils/AppError.js";
 import { appOrdersModel as model } from "./order.model.js";
 
 export const getAllOrders = async (userId) => {
-  const orders = await model.findAllOrders(userId);
-  return orders;
+  return model.findAllOrders(userId);
 };
 
 export const getOrderDetails = async (orderId, userId) => {
   const order = await model.findOrderById(orderId, userId);
-  if (!order) throw new Error("Order not found");
+  if (!order) throw new AppError("Order not found", 404);
   return order;
 };
 
@@ -20,10 +20,11 @@ export const createOrder = async (userId, orderData) => {
     const { paymentMethod, branchId, instructions } = orderData;
 
     const carts = await model.findAll(client, userId);
-    if (carts.length === 0) throw new Error("Cart is empty");
+    if (carts.length === 0) throw new AppError("Cart is empty", 400);
 
     const address = await model.findAddressesByUserId(client, userId);
-    if (!address) throw new Error("Please add a delivery address first");
+    if (!address)
+      throw new AppError("Please add a delivery address first", 400);
 
     const totalAmount = carts.reduce((sum, item) => {
       const drinksTotal = item.addons.drinks.reduce(
@@ -54,7 +55,6 @@ export const createOrder = async (userId, orderData) => {
         (acc, addon) => acc + Number(addon.price),
         0,
       );
-
       const addonsTotal = drinksTotal + extrasTotal;
       const unitPrice = Number(cart.price) / cart.quantity;
       const subtotal = Number(cart.price) + addonsTotal;
@@ -69,15 +69,7 @@ export const createOrder = async (userId, orderData) => {
         subtotal,
       );
 
-      for (const addon of cart.addons.drinks) {
-        await model.createOrderItemAddon(client, orderItem.orderItemId, {
-          addonId: addon.id,
-          addonName: addon.name,
-          addonPrice: addon.price,
-        });
-      }
-
-      for (const addon of cart.addons.extras) {
+      for (const addon of [...cart.addons.drinks, ...cart.addons.extras]) {
         await model.createOrderItemAddon(client, orderItem.orderItemId, {
           addonId: addon.id,
           addonName: addon.name,
@@ -129,14 +121,13 @@ export const deleteOrder = async (orderId, userId) => {
     await client.query("BEGIN");
 
     const order = await model.findOrderById(orderId, userId);
-    if (!order) throw new Error("Order not found");
+    if (!order) throw new AppError("Order not found", 404);
 
     if (order.status !== "PLACED") {
-      throw new Error("Only placed orders can be cancelled");
+      throw new AppError("Only placed orders can be cancelled", 400);
     }
 
     await model.createOrderStatusLogs(client, orderId, "CANCELLED");
-
     await model.updateOrderStatus(client, orderId, "CANCELLED");
 
     await client.query("COMMIT");
