@@ -1,117 +1,48 @@
-import { AdminProductServices as service } from "./product.service.js";
+import asyncHandler from "../../../utils/asyncHandler.js";
+import * as service from "./product.service.js";
 
-export const AdminProductController = {
-  getAllProducts: async (req, res) => {
-    try {
-      const products = await service.getAllProducts();
+export const getAllProducts = asyncHandler(async (req, res) => {
+  const products = await service.getAllProducts();
+  return res.status(200).json({ success: true, products });
+});
 
-      return res.status(200).json({
-        success: true,
-        products,
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  },
+export const createProduct = asyncHandler(async (req, res) => {
+  const product = await service.createProduct(req.body);
+  return res
+    .status(201)
+    .json({ success: true, message: "Product created successfully", product });
+});
 
-  createProduct: async (req, res) => {
-    try {
-      const product = await service.createProduct(req.body);
+export const getProductDetails = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+  const product = await service.getProductDetails(productId);
+  return res.status(200).json({ success: true, product });
+});
 
-      return res.status(201).json({
-        success: true,
-        message: "Product created successfully",
-        product,
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  },
+export const updateProduct = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+  const updatedProduct = await service.updateProduct(productId, req.body);
+  return res.status(200).json({
+    success: true,
+    message: "Product updated successfully",
+    updatedProduct,
+  });
+});
 
-  getProductDetails: async (req, res) => {
-    try {
-      const { productId } = req.params;
+export const deleteProduct = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+  const product = await service.deleteProduct(productId);
+  return res
+    .status(200)
+    .json({ success: true, message: `${product.name} removed from catalog` });
+});
 
-      const product = await service.getProductDetails(productId);
-
-      return res.status(200).json({
-        success: true,
-        product,
-      });
-    } catch (error) {
-      return res.status(404).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  },
-
-  updateProduct: async (req, res) => {
-    try {
-      const { productId } = req.params;
-      const {
-        name,
-        category,
-        price,
-        description,
-        unliRice,
-        available,
-        image,
-        addOns,
-      } = req.body;
-      const updatedProduct = await service.updateProduct(productId, req.body);
-
-      return res.status(200).json({
-        success: true,
-        message: "Product updated successfully!",
-        updatedProduct,
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  },
-
-  deleteProduct: async (req, res) => {
-    try {
-      const { productId } = req.params;
-      const product = await service.deleteProduct(productId);
-
-      return res.status(200).json({
-        success: true,
-        message: `${product.name} removed from catalog`,
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  },
-
-  updateAvailability: async (req, res) => {
-    try {
-      const { productId } = req.params;
-      const updatedProduct = await service.updateAvailability(productId);
-
-      return res.status(200).json({
-        success: true,
-        message: `${updatedProduct.name} updated successfully`,
-        updatedProduct,
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  },
-};
+export const updateAvailability = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+  const updatedProduct = await service.updateAvailability(productId);
+  return res.status(200).json({
+    success: true,
+    message: `${updatedProduct.name} availability updated`,
+    updatedProduct,
+  });
+});
