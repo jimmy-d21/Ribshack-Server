@@ -19,3 +19,33 @@ export const getKPIS = async () => {
     },
   };
 };
+
+export const getRegionalRevenue = async () => {
+  const REGION_COLORS = {
+    Visayas: "#10b981",
+    Mindanao: "#f59e0b",
+    Luzon: "#3b82f6",
+  };
+
+  const formatTrend = (value) => {
+    const num = parseFloat(value ?? 0);
+    return num > 0 ? `+${num}%` : `${num}%`;
+  };
+  const rows = await model.getRegionalRevenue();
+
+  // Calculate total revenue across all regions for percentage
+  const totalRevenue = rows.reduce((sum, r) => sum + parseFloat(r.revenue), 0);
+
+  return rows.map((r) => ({
+    region: r.region,
+    branches: parseInt(r.branches),
+    revenue: parseFloat(r.revenue),
+    orders: parseInt(r.orders),
+    percentage:
+      totalRevenue > 0
+        ? parseFloat(((parseFloat(r.revenue) / totalRevenue) * 100).toFixed(1))
+        : 0,
+    growth: formatTrend(r.growth),
+    color: REGION_COLORS[r.region] ?? "#6b7280",
+  }));
+};

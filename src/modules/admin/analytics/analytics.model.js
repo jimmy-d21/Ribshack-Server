@@ -85,6 +85,53 @@ class AdminAnalyticsModel {
     const { rows } = await db.query(sql);
     return rows[0];
   }
+
+  async getRegionalRevenue() {
+    const sql = `
+            SELECT
+            br.region_name AS region,
+            COUNT(DISTINCT b.branch_id) AS branches,
+
+            -- Total revenue today per region (excluding cancelled)
+            COALESCE(SUM(
+                CASE WHEN o.order_status != 'CANCELLED'
+                AND o.placed_at::date = CURRENT_DATE
+                THEN o.total_amount ELSE 0 END
+            ), 0) AS revenue,
+
+            -- Total orders today per region
+            COUNT(
+                CASE WHEN o.placed_at::date = CURRENT_DATE
+                THEN o.order_id END
+            ) AS orders,
+
+            -- Revenue trend: today vs yesterday
+            -- growth = ((today - yesterday) / yesterday) * 100
+            ROUND(
+                (
+                (SUM(CASE WHEN o.placed_at::date = CURRENT_DATE
+                    AND o.order_status != 'CANCELLED'
+                    THEN o.total_amount ELSE 0 END) -
+                SUM(CASE WHEN o.placed_at::date = CURRENT_DATE - INTERVAL '1 day'
+                    AND o.order_status != 'CANCELLED'
+                    THEN o.total_amount ELSE 0 END))
+                /
+                NULLIF(SUM(CASE WHEN o.placed_at::date = CURRENT_DATE - INTERVAL '1 day'
+                    AND o.order_status != 'CANCELLED'
+                    THEN o.total_amount ELSE 0 END), 0)
+                ) * 100, 2
+            ) AS growth
+
+            FROM branches_regions br
+            LEFT JOIN branches b  ON b.region_id = br.region_id
+            LEFT JOIN orders o    ON o.branch_id  = b.branch_id
+            GROUP BY br.region_id, br.region_name
+            ORDER BY revenue DESC
+            `;
+
+    const { rows } = await db.query(sql);
+    return rows;
+  }
 }
 
 export const adminAnalyticsModel = new AdminAnalyticsModel();

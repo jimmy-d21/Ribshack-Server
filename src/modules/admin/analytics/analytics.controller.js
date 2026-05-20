@@ -5,3 +5,8 @@ export const getKPIS = asyncHandler(async (req, res) => {
   const kpis = await service.getKPIS();
   return res.status(200).json({ success: true, kpis });
 });
+
+export const getRegionalRevenue = asyncHandler(async (req, res) => {
+  const regionPerformance = await service.getRegionalRevenue();
+  return res.status(200).json({ success: true, regionPerformance });
+});
