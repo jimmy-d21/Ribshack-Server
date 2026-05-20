@@ -1,14 +1,14 @@
 import { adminAnalyticsModel as model } from "./analytics.model.js";
-
-const formatTrend = (value) => {
-  const num = parseFloat(value);
-  return num > 0 ? `+${num}%` : `${num}%`;
-};
+import {
+  formatTrend,
+  REGION_COLORS,
+  CATEGORY_COLORS,
+} from "../../../utils/analytics.utils.js";
 
 export const getKPIS = async () => {
   const raw = await model.getKPIs();
   return {
-    totalRevenue: parseFloat(raw.total_revenue),
+    totalRevenue: parseInt(raw.total_revenue),
     totalOrders: parseInt(raw.total_orders),
     activeStores: parseInt(raw.active_stores),
     avgOrderValue: parseFloat(raw.avg_order_value),
@@ -21,19 +21,9 @@ export const getKPIS = async () => {
 };
 
 export const getRegionalRevenue = async () => {
-  const REGION_COLORS = {
-    Visayas: "#10b981",
-    Mindanao: "#f59e0b",
-    Luzon: "#3b82f6",
-  };
-
-  const formatTrend = (value) => {
-    const num = parseFloat(value ?? 0);
-    return num > 0 ? `+${num}%` : `${num}%`;
-  };
   const rows = await model.getRegionalRevenue();
 
-  // Calculate total revenue across all regions for percentage
+  // Calculate total revenue across all regions for percentage share
   const totalRevenue = rows.reduce((sum, r) => sum + parseFloat(r.revenue), 0);
 
   return rows.map((r) => ({
@@ -51,47 +41,35 @@ export const getRegionalRevenue = async () => {
 };
 
 export const getTopBranches = async () => {
-  const formatGrowth = (value) => {
-    const num = parseFloat(value ?? 0);
-    return num > 0 ? `+${num}%` : `${num}%`;
-  };
-
   const rows = await model.getTopBranches();
 
-  return rows.map((r) => ({
-    id: r.id,
+  return rows.map((r, index) => ({
+    id: parseInt(r.id),
     name: r.name,
     location: r.location,
     region: r.region,
     revenue: parseFloat(r.revenue),
     orders: parseInt(r.orders),
-    growth: formatGrowth(r.growth),
+    growth: formatTrend(r.growth),
+    note: index === 0 ? "Top Performer" : null,
   }));
 };
 
-export const getSalesBycategory = async () => {
-  const CATEGORY_COLORS = {
-    Pork: "#ef4444",
-    Chicken: "#f97316",
-    Seafood: "#3b82f6",
-    Sides: "#10b981",
-    Drinks: "#06b6d4",
-  };
-
+export const getSalesByCategory = async () => {
   const rows = await model.getSalesByCategory();
 
-  const totalRevenue = rows.reduce((sum, r) => sum + parseInt(r.value), 0);
+  // Calculate total revenue across all categories for percentage share
+  const totalRevenue = rows.reduce((sum, r) => sum + parseFloat(r.value), 0);
 
-  const percentage = (value) => {
-    return totalRevenue > 0
+  const getPercentage = (value) =>
+    totalRevenue > 0
       ? parseFloat(((parseFloat(value) / totalRevenue) * 100).toFixed(1))
       : 0;
-  };
 
   return rows.map((r) => ({
     name: r.name,
     value: parseInt(r.value),
-    percentage: percentage(r.value),
+    percentage: getPercentage(r.value),
     color: CATEGORY_COLORS[r.name] ?? "#6b7280",
   }));
 };
@@ -117,12 +95,6 @@ export const getMonthlyRevenue = async () => {
   }));
 };
 
-// Module-level helper — defined once, not recreated on every call
-const formatGrowth = (value) => {
-  const num = parseFloat(value ?? 0);
-  return num > 0 ? `+${num}%` : `${num}%`;
-};
-
 export const getProductBestSeller = async () => {
   const rows = await model.getProductBestSeller();
 
@@ -132,7 +104,7 @@ export const getProductBestSeller = async () => {
     category: r.category,
     sold: parseInt(r.sold),
     revenue: parseFloat(r.revenue),
-    growth: formatGrowth(r.growth),
+    growth: formatTrend(r.growth),
     popularIn: r.popular_in ?? [],
   }));
 };
