@@ -1,12 +1,13 @@
+import AppError from "../../../utils/AppError.js";
 import { appAddressModel as model } from "./address.model.js";
 
 export const getAllAddress = async (userId) => {
-  return await model.findAddressesByUserId(userId);
+  return model.findAddressesByUserId(userId);
 };
 
 export const getAddressDetails = async (addressId, userId) => {
   const address = await model.findAddressByIdAndUser(addressId, userId);
-  if (!address) throw new Error("Address not found");
+  if (!address) throw new AppError("Address not found", 404);
   return address;
 };
 
@@ -27,7 +28,7 @@ export const addAddress = async (userId, addressData) => {
 
 export const updateAddress = async (addressId, userId, addressData) => {
   const existingAddress = await model.findAddressByIdAndUser(addressId, userId);
-  if (!existingAddress) throw new Error("Address not found");
+  if (!existingAddress) throw new AppError("Address not found", 404);
 
   const shouldBeDefault =
     addressData.isDefault !== undefined
@@ -38,7 +39,7 @@ export const updateAddress = async (addressId, userId, addressData) => {
     await model.updateAllAddressDefault(userId, addressId);
   }
 
-  return await model.updateAddress(addressId, userId, {
+  return model.updateAddress(addressId, userId, {
     label: addressData.label || existingAddress.label,
     fullAddress: addressData.fullAddress || existingAddress.fullAddress,
     landMark:
@@ -54,15 +55,14 @@ export const updateAddress = async (addressId, userId, addressData) => {
 
 export const deleteAddress = async (addressId, userId) => {
   const address = await model.findAddressByIdAndUser(addressId, userId);
-  if (!address) throw new Error("Address not found");
-
-  await model.deleteAddress(addressId, userId);
+  if (!address) throw new AppError("Address not found", 404);
+  return model.deleteAddress(addressId, userId);
 };
 
 export const setDefaultAddress = async (addressId, userId) => {
   const address = await model.findAddressByIdAndUser(addressId, userId);
-  if (!address) throw new Error("Address not found");
+  if (!address) throw new AppError("Address not found", 404);
 
   await model.updateAllAddressDefault(userId, addressId);
-  return await model.setDefaultAddress(addressId, userId);
+  return model.setDefaultAddress(addressId, userId);
 };

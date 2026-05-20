@@ -1,125 +1,58 @@
+import asyncHandler from "../../../utils/asyncHandler.js";
 import * as service from "./address.service.js";
 
-const resolveStatus = (message = "") => {
-  const msg = message.toLowerCase();
-  if (msg.includes("not found")) return 404;
-  if (msg.includes("unauthorized")) return 401;
-  if (msg.includes("forbidden")) return 403;
-  if (
-    msg.includes("invalid") ||
-    msg.includes("must be") ||
-    msg.includes("required")
-  )
-    return 400;
-  return 500;
-};
+export const getAllAddress = asyncHandler(async (req, res) => {
+  const userId = req.authUser.id;
+  const addresses = await service.getAllAddress(userId);
+  return res.status(200).json({ success: true, addresses });
+});
 
-export const getAllAddress = async (req, res) => {
-  try {
-    const userId = req.authUser.id;
-    const addresses = await service.getAllAddress(userId);
+export const getAddressDetails = asyncHandler(async (req, res) => {
+  const { addressId } = req.params;
+  const userId = req.authUser.id;
+  const address = await service.getAddressDetails(addressId, userId);
+  return res.status(200).json({ success: true, address });
+});
 
-    return res.status(200).json({
-      success: true,
-      addresses,
-    });
-  } catch (error) {
-    return res
-      .status(resolveStatus(error.message))
-      .json({ success: false, message: error.message });
-  }
-};
+export const addAddress = asyncHandler(async (req, res) => {
+  const userId = req.authUser.id;
+  const newAddress = await service.addAddress(userId, req.body);
+  return res
+    .status(201)
+    .json({ success: true, message: "Address added successfully", newAddress });
+});
 
-export const getAddressDetails = async (req, res) => {
-  try {
-    const { addressId } = req.params;
-    const userId = req.authUser.id;
+export const updateAddress = asyncHandler(async (req, res) => {
+  const { addressId } = req.params;
+  const userId = req.authUser.id;
+  const updatedAddress = await service.updateAddress(
+    addressId,
+    userId,
+    req.body,
+  );
+  return res.status(200).json({
+    success: true,
+    message: "Address updated successfully",
+    updatedAddress,
+  });
+});
 
-    const address = await service.getAddressDetails(addressId, userId);
+export const deleteAddress = asyncHandler(async (req, res) => {
+  const { addressId } = req.params;
+  const userId = req.authUser.id;
+  await service.deleteAddress(addressId, userId);
+  return res
+    .status(200)
+    .json({ success: true, message: "Address deleted successfully" });
+});
 
-    return res.status(200).json({
-      success: true,
-      address,
-    });
-  } catch (error) {
-    return res
-      .status(resolveStatus(error.message))
-      .json({ success: false, message: error.message });
-  }
-};
-
-export const addAddress = async (req, res) => {
-  try {
-    const userId = req.authUser.id;
-    const newAddress = await service.addAddress(userId, req.body);
-
-    return res.status(201).json({
-      success: true,
-      message: "Address added successfully",
-      newAddress,
-    });
-  } catch (error) {
-    return res
-      .status(resolveStatus(error.message))
-      .json({ success: false, message: error.message });
-  }
-};
-
-export const updateAddress = async (req, res) => {
-  try {
-    const { addressId } = req.params;
-    const userId = req.authUser.id;
-    const updatedAddress = await service.updateAddress(
-      addressId,
-      userId,
-      req.body,
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: "Address updated successfully",
-      updatedAddress,
-    });
-  } catch (error) {
-    return res
-      .status(resolveStatus(error.message))
-      .json({ success: false, message: error.message });
-  }
-};
-
-export const deleteAddress = async (req, res) => {
-  try {
-    const { addressId } = req.params;
-    const userId = req.authUser.id;
-
-    await service.deleteAddress(addressId, userId);
-
-    return res.status(200).json({
-      success: true,
-      message: "Address deteled successfully",
-    });
-  } catch (error) {
-    return res
-      .status(resolveStatus(error.message))
-      .json({ success: false, message: error.message });
-  }
-};
-
-export const setDefaultAddress = async (req, res) => {
-  try {
-    const { addressId } = req.params;
-    const userId = req.authUser.id;
-
-    const defaultAddress = await service.setDefaultAddress(addressId, userId);
-
-    return res.status(200).json({
-      success: true,
-      message: "Address default successfully",
-      defaultAddress,
-    });
-  } catch (error) {
-    return res
-      .status(resolveStatus(error.message))
-      .json({ success: false, message: error.message });
-  }
-};
+export const setDefaultAddress = asyncHandler(async (req, res) => {
+  const { addressId } = req.params;
+  const userId = req.authUser.id;
+  const defaultAddress = await service.setDefaultAddress(addressId, userId);
+  return res.status(200).json({
+    success: true,
+    message: "Default address updated successfully",
+    defaultAddress,
+  });
+});
