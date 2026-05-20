@@ -1,9 +1,9 @@
+import AppError from "../../../utils/AppError.js";
 import { appCartModel as model } from "./cart.model.js";
 import db from "../../../config/db.js";
 
 export const getAllCarts = async (userId) => {
-  const carts = await model.findAll(userId);
-  return carts;
+  return model.findAll(userId);
 };
 
 export const addToCart = async (userId, cartData) => {
@@ -52,21 +52,19 @@ export const updateCart = async (itemId, cartData) => {
 
     const { quantity, price, addOns = [] } = cartData;
 
-    // pass client correctly
     const cartItem = await model.findCartItem(client, itemId);
-    if (!cartItem) throw new Error("Cart item not found");
+    if (!cartItem) throw new AppError("Cart item not found", 404);
 
-    // price from body is the unit price; pass it as unitPrice
-    const newCartItem = await model.updateCartItem(client, itemId, {
+    const updatedCartItem = await model.updateCartItem(client, itemId, {
       quantity,
       unitPrice: price,
     });
 
-    // Delete all old addons then re-insert
+    // Replace all add-ons with the incoming set
     await model.deleteAllAddons(client, itemId);
 
     for (const addOn of addOns) {
-      await model.createCartAddon(client, newCartItem.cart_item_id, {
+      await model.createCartAddon(client, updatedCartItem.cart_item_id, {
         addonId: addOn.id,
         addonName: addOn.name,
         addonPrice: addOn.price,
@@ -74,9 +72,7 @@ export const updateCart = async (itemId, cartData) => {
     }
 
     await client.query("COMMIT");
-
-    // return newCartItem, not the stale cartItem
-    return newCartItem;
+    return updatedCartItem;
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
@@ -84,19 +80,15 @@ export const updateCart = async (itemId, cartData) => {
     client.release();
   }
 };
+
 export const deleteCartItem = async (itemId) => {
   const cartItem = await model.findCartItem(db, itemId);
-  if (!cartItem) throw new Error("Cart item not found");
-
-  const deletedItem = await model.deleteCartItem(itemId);
-  return deletedItem;
+  if (!cartItem) throw new AppError("Cart item not found", 404);
+  return model.deleteCartItem(itemId);
 };
 
 export const deleteAllCartItem = async (userId) => {
   const cart = await model.findCartByUserId(db, userId);
-
   if (!cart) return [];
-
-  const deletedItems = await model.deleteAllCartItems(cart.cart_id);
-  return deletedItems;
+  return model.deleteAllCartItems(cart.cart_id);
 };
