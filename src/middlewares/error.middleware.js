@@ -8,7 +8,8 @@ export const notFound = (req, res, next) => {
 // Catches all errors forwarded via next(error) and returns a JSON response.
 // AppError instances carry their own statusCode; everything else defaults to 500.
 export const errorHandler = (err, req, res, next) => {
-  const statusCode = res.statusCode !== 200 ? res.statusCode : 500;
+  const statusCode =
+    err.statusCode || (res.statusCode !== 200 ? res.statusCode : 500);
 
   return res.status(statusCode).json({
     message: err.message || "Internal Server Error",

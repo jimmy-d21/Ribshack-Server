@@ -4,8 +4,8 @@ import ENV from "../utils/env.js";
 const verifyToken = async (req, res, next) => {
   try {
     const cookiesToken = req.cookies?.token;
-    const bearToken = req.headers.autorization?.startsWith("Bearer ")
-      ? req.headers.autorization.split(" ")[1]
+    const bearToken = req.headers.authorization?.startsWith("Bearer ")
+      ? req.headers.authorization.split(" ")[1]
       : null;
 
     const token = cookiesToken || bearToken;
@@ -16,7 +16,7 @@ const verifyToken = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, ENV.jwt.secret);
-    req.authUser = decoded; // { id: currentId, role }
+    req.authUser = decoded;
     next();
   } catch (error) {
     return res.status(401).json({ message: "Unauthorized - Invalid token" });
