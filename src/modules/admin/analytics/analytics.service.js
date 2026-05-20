@@ -116,3 +116,23 @@ export const getMonthlyRevenue = async () => {
     current: parseInt(r.current),
   }));
 };
+
+// Module-level helper — defined once, not recreated on every call
+const formatGrowth = (value) => {
+  const num = parseFloat(value ?? 0);
+  return num > 0 ? `+${num}%` : `${num}%`;
+};
+
+export const getProductBestSeller = async () => {
+  const rows = await model.getProductBestSeller();
+
+  return rows.map((r) => ({
+    id: parseInt(r.id),
+    name: r.name,
+    category: r.category,
+    sold: parseInt(r.sold),
+    revenue: parseFloat(r.revenue),
+    growth: formatGrowth(r.growth),
+    popularIn: r.popular_in ?? [],
+  }));
+};

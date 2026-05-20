@@ -262,6 +262,74 @@ class AdminAnalyticsModel {
     const { rows } = await db.query(sql);
     return rows;
   }
+
+  async getProductBestSeller() {
+    const sql = `
+        SELECT
+            p.product_id     AS id,
+            p.product_name   AS name,
+            pc.category_name AS category,
+
+            -- Total quantity sold today, excluding cancelled orders
+            COALESCE(SUM(
+                CASE WHEN o.order_status != 'CANCELLED'
+                AND o.placed_at::date = CURRENT_DATE
+                THEN oi.quantity ELSE 0 END
+            ), 0) AS sold,
+
+            -- Total revenue today (quantity x unit price), excluding cancelled orders
+            COALESCE(SUM(
+                CASE WHEN o.order_status != 'CANCELLED'
+                AND o.placed_at::date = CURRENT_DATE
+                THEN oi.quantity * oi.unit_price ELSE 0 END
+            ), 0) AS revenue,
+
+            -- Revenue growth trend: today vs yesterday
+            -- Formula: ((today - yesterday) / yesterday) * 100
+            ROUND(
+                (
+                (SUM(CASE WHEN o.placed_at::date = CURRENT_DATE
+                    AND o.order_status != 'CANCELLED'
+                    THEN oi.quantity * oi.unit_price ELSE 0 END) -
+                SUM(CASE WHEN o.placed_at::date = CURRENT_DATE - INTERVAL '1 day'
+                    AND o.order_status != 'CANCELLED'
+                    THEN oi.quantity * oi.unit_price ELSE 0 END))
+                /
+                NULLIF(SUM(CASE WHEN o.placed_at::date = CURRENT_DATE - INTERVAL '1 day'
+                    AND o.order_status != 'CANCELLED'
+                    THEN oi.quantity * oi.unit_price ELSE 0 END), 0)
+                ) * 100, 2
+            ) AS growth,
+
+            -- Top 2 regions where this product is most ordered today
+            (
+                SELECT ARRAY_AGG(region_name)
+                FROM (
+                SELECT br.region_name
+                FROM order_items oi2
+                JOIN orders o2           ON o2.order_id  = oi2.order_id
+                JOIN branches b2         ON b2.branch_id = o2.branch_id
+                JOIN branches_regions br ON br.region_id = b2.region_id
+                WHERE oi2.product_id     = p.product_id
+                    AND o2.order_status   != 'CANCELLED'
+                    AND o2.placed_at::date = CURRENT_DATE
+                GROUP BY br.region_name
+                ORDER BY SUM(oi2.quantity) DESC
+                LIMIT 2
+                ) top_regions
+            ) AS popular_in
+
+        FROM products p
+        JOIN  product_categories pc ON pc.category_id = p.category_id
+        LEFT JOIN order_items oi    ON oi.product_id  = p.product_id
+        LEFT JOIN orders o          ON o.order_id     = oi.order_id
+
+        GROUP BY p.product_id, p.product_name, pc.category_name
+        ORDER BY revenue DESC`;
+
+    const { rows } = await db.query(sql);
+    return rows;
+  }
 }
 
 export const adminAnalyticsModel = new AdminAnalyticsModel();
