@@ -49,3 +49,22 @@ export const getRegionalRevenue = async () => {
     color: REGION_COLORS[r.region] ?? "#6b7280",
   }));
 };
+
+export const getTopBranches = async () => {
+  const formatGrowth = (value) => {
+    const num = parseFloat(value ?? 0);
+    return num > 0 ? `+${num}%` : `${num}%`;
+  };
+
+  const rows = await model.getTopBranches();
+
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    location: r.location,
+    region: r.region,
+    revenue: parseFloat(r.revenue),
+    orders: parseInt(r.orders),
+    growth: formatGrowth(r.growth),
+  }));
+};
