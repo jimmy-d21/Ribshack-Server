@@ -1,6 +1,7 @@
 import express from "express";
-import { StoreAuthValidation as validate } from "./auth.validation.js";
-import { StoreAuthController as controller } from "./auth.controller.js";
+import * as controller from "./auth.controller.js";
+import { validate } from "../../../middlewares/validate.middleware.js";
+import { storeLoginSchema } from "./auth.schema.js";
 import verifyToken, {
   authorizeRoles,
 } from "../../../middlewares/auth.middleware.js";
@@ -8,7 +9,7 @@ import verifyToken, {
 const router = express.Router();
 
 router.get("/me", verifyToken, authorizeRoles("branch"), controller.me);
-router.post("/login", validate.login, controller.login);
+router.post("/login", validate(storeLoginSchema), controller.login);
 router.post(
   "/logout",
   verifyToken,
