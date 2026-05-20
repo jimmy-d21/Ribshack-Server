@@ -25,3 +25,8 @@ export const getWeeklyRevenue = asyncHandler(async (req, res) => {
   const weeklyRevenue = await service.getWeeklyRevenue();
   return res.status(200).json({ success: true, weeklyRevenue });
 });
+
+export const getMonthlyRevenue = asyncHandler(async (req, res) => {
+  const weeklyRevenue = await service.getMonthlyRevenue();
+  return res.status(200).json({ success: true, weeklyRevenue });
+});

@@ -229,6 +229,39 @@ class AdminAnalyticsModel {
     const { rows } = await db.query(sql);
     return rows;
   }
+
+  async getMonthlyRevenue() {
+    const sql = `
+        SELECT
+            TO_CHAR(month, 'Mon') AS month,
+
+            -- Previous year revenue per month, excluding cancelled orders
+            COALESCE(SUM(
+                CASE WHEN DATE_PART('year', o.placed_at) = DATE_PART('year', CURRENT_DATE) - 1
+                AND o.order_status != 'CANCELLED'
+                THEN o.total_amount ELSE 0 END
+            ), 0) AS previous,
+                
+            -- Current year revenue per month, excluding cancelled orders
+            COALESCE(SUM(
+                CASE WHEN DATE_PART('year', o.placed_at) = DATE_PART('year', CURRENT_DATE)
+                AND o.order_status != 'CANCELLED'
+                THEN o.total_amount ELSE 0 END
+            ), 0) AS current
+
+        FROM GENERATE_SERIES(
+        DATE_TRUNC('year', CURRENT_DATE),
+        CURRENT_DATE,
+        INTERVAL '1 month'
+        ) AS month
+            
+            LEFT JOIN orders o ON DATE_TRUNC('month', o.placed_at) = DATE_TRUNC('month', month)
+                                AND o.order_status != 'CANCELLED'
+        GROUP BY month`;
+
+    const { rows } = await db.query(sql);
+    return rows;
+  }
 }
 
 export const adminAnalyticsModel = new AdminAnalyticsModel();

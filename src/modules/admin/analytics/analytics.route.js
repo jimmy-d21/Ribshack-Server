@@ -8,5 +8,6 @@ router.get("/revenue/regional", controller.getRegionalRevenue);
 router.get("/branches/leaderboard", controller.getTopBranches);
 router.get("/sales/by-category", controller.getSalesBycategory);
 router.get("/revenue/weekly", controller.getWeeklyRevenue);
+router.get("/revenue/monthly", controller.getMonthlyRevenue);
 
 export default router;

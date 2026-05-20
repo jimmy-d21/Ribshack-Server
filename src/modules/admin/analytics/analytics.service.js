@@ -106,3 +106,13 @@ export const getWeeklyRevenue = async () => {
     luzon: parseInt(r.luzon),
   }));
 };
+
+export const getMonthlyRevenue = async () => {
+  const rows = await model.getMonthlyRevenue();
+
+  return rows.map((r) => ({
+    month: r.month,
+    previous: parseInt(r.previous),
+    current: parseInt(r.current),
+  }));
+};
