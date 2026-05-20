@@ -20,3 +20,8 @@ export const getSalesBycategory = asyncHandler(async (req, res) => {
   const salesByCategory = await service.getSalesBycategory();
   return res.status(200).json({ success: true, salesByCategory });
 });
+
+export const getWeeklyRevenue = asyncHandler(async (req, res) => {
+  const weeklyRevenue = await service.getWeeklyRevenue();
+  return res.status(200).json({ success: true, weeklyRevenue });
+});

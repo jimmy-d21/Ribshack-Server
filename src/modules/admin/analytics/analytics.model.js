@@ -203,6 +203,32 @@ class AdminAnalyticsModel {
     const { rows } = await db.query(sql);
     return rows;
   }
+
+  async getWeeklyRevenue() {
+    const sql = `
+        SELECT
+            TO_CHAR(day, 'Dy') AS day,
+            COALESCE(SUM(CASE WHEN br.region_name = 'Visayas'  THEN o.total_amount ELSE 0 END), 0) AS visayas,
+            COALESCE(SUM(CASE WHEN br.region_name = 'Mindanao' THEN o.total_amount ELSE 0 END), 0) AS mindanao,
+            COALESCE(SUM(CASE WHEN br.region_name = 'Luzon'    THEN o.total_amount ELSE 0 END), 0) AS luzon
+
+        FROM GENERATE_SERIES(
+        CURRENT_DATE - INTERVAL '6 days',
+        CURRENT_DATE,
+        INTERVAL '1 day'
+        ) AS day
+
+        LEFT JOIN orders o            ON o.placed_at::date = day::date
+                                    AND o.order_status    != 'CANCELLED'
+        LEFT JOIN branches b          ON b.branch_id        = o.branch_id
+        LEFT JOIN branches_regions br ON br.region_id        = b.region_id
+
+        GROUP BY day
+        ORDER BY day ASC`;
+
+    const { rows } = await db.query(sql);
+    return rows;
+  }
 }
 
 export const adminAnalyticsModel = new AdminAnalyticsModel();

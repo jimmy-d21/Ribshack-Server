@@ -95,3 +95,14 @@ export const getSalesBycategory = async () => {
     color: CATEGORY_COLORS[r.name] ?? "#6b7280",
   }));
 };
+
+export const getWeeklyRevenue = async () => {
+  const rows = await model.getWeeklyRevenue();
+
+  return rows.map((r) => ({
+    day: r.day,
+    visayas: parseInt(r.visayas),
+    mindanao: parseInt(r.mindanao),
+    luzon: parseInt(r.luzon),
+  }));
+};
