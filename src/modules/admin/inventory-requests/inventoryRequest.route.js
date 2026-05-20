@@ -1,18 +1,19 @@
 import express from "express";
-import { AdminInventoryRequestController as controller } from "./inventoryRequest.controller.js";
-import { AdminInventoryRequestValidation as validate } from "./inventoryRequest.validation.js";
+import * as controller from "./inventoryRequest.controller.js";
+import { validate } from "../../../middlewares/validate.middleware.js";
+import { requestActionSchema } from "./inventoryRequest.schema.js";
 
 const router = express.Router();
 
 router.get("/", controller.getAllRequests);
 router.put(
   "/:requestId/approve",
-  validate.approveRequest,
+  validate(requestActionSchema),
   controller.approveRequest,
 );
 router.put(
   "/:requestId/decline",
-  validate.declineRequest,
+  validate(requestActionSchema),
   controller.declineRequest,
 );
 

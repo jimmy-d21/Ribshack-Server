@@ -1,62 +1,35 @@
-import { AdminInventoryRequestService as service } from "./inventoryRequest.service.js";
+import asyncHandler from "../../../utils/asyncHandler.js";
+import * as service from "./inventoryRequest.service.js";
 
-export const AdminInventoryRequestController = {
-  getAllRequests: async (req, res) => {
-    try {
-      const { status } = req.query;
-      const inventoryRequests = await service.getAllRequests(status);
+export const getAllRequests = asyncHandler(async (req, res) => {
+  const { status } = req.query;
+  const inventoryRequests = await service.getAllRequests(status);
+  return res.status(200).json({ success: true, inventoryRequests });
+});
 
-      return res.status(200).json({
-        success: true,
-        inventoryRequests,
-      });
-    } catch (error) {
-      return res.status(500).json({ success: false, message: error.message });
-    }
-  },
+export const approveRequest = asyncHandler(async (req, res) => {
+  const { requestId } = req.params;
+  const { remarks } = req.body;
+  const adminId = req.authUser.id;
 
-  approveRequest: async (req, res) => {
-    try {
-      const { requestId } = req.params;
-      const { remarks } = req.body;
-      const adminId = req.authUser.id;
+  const data = await service.approveRequest(requestId, remarks, adminId);
+  return res.status(200).json({
+    success: true,
+    message:
+      "Inventory request approved and store inventory updated successfully",
+    data,
+  });
+});
 
-      const updatedRequest = await service.approveRequest(
-        requestId,
-        remarks,
-        adminId,
-      );
+export const declineRequest = asyncHandler(async (req, res) => {
+  const { requestId } = req.params;
+  const { remarks } = req.body;
+  const adminId = req.authUser.id;
 
-      return res.status(200).json({
-        success: true,
-        message:
-          "Inventory request approved and store inventory updated successfully",
-        data: updatedRequest,
-      });
-    } catch (error) {
-      return res.status(500).json({ success: false, message: error.message });
-    }
-  },
-
-  declineRequest: async (req, res) => {
-    try {
-      const { requestId } = req.params;
-      const { remarks } = req.body;
-      const adminId = req.authUser.id;
-
-      const updatedRequest = await service.declineRequest(
-        requestId,
-        remarks,
-        adminId,
-      );
-
-      return res.status(200).json({
-        success: true,
-        message: "Inventory request declined successfully",
-        data: updatedRequest,
-      });
-    } catch (error) {
-      return res.status(500).json({ success: false, message: error.message });
-    }
-  },
-};
+  const data = await service.declineRequest(requestId, remarks, adminId);
+  return res.status(200).json({
+    success: true,
+    message: "Inventory request declined successfully",
+    data,
+  });
+});
