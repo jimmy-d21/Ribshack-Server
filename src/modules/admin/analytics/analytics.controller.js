@@ -15,3 +15,8 @@ export const getTopBranches = asyncHandler(async (req, res) => {
   const topBranches = await service.getTopBranches();
   return res.status(200).json({ success: true, topBranches });
 });
+
+export const getSalesBycategory = asyncHandler(async (req, res) => {
+  const salesByCategory = await service.getSalesBycategory();
+  return res.status(200).json({ success: true, salesByCategory });
+});

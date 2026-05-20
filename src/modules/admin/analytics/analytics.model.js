@@ -180,6 +180,29 @@ class AdminAnalyticsModel {
     const { rows } = await db.query(sql);
     return rows;
   }
+
+  async getSalesByCategory() {
+    const sql = `
+        SELECT
+            pc.category_name AS name,
+
+            -- Total revenue today per category, excluding cancelled orders
+            COALESCE(SUM(
+                CASE WHEN o.order_status != 'CANCELLED'
+                AND o.placed_at::date = CURRENT_DATE
+                THEN o.total_amount ELSE 0 END
+            ), 0) AS value
+
+        FROM product_categories pc
+        LEFT JOIN products p        ON p.category_id  = pc.category_id
+        LEFT JOIN order_items oi    ON oi.product_id  = p.product_id
+        LEFT JOIN orders o          ON o.order_id     = oi.order_id
+        GROUP BY pc.category_id, pc.category_name
+        ORDER BY value DESC`;
+
+    const { rows } = await db.query(sql);
+    return rows;
+  }
 }
 
 export const adminAnalyticsModel = new AdminAnalyticsModel();

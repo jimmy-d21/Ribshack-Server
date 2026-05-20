@@ -68,3 +68,30 @@ export const getTopBranches = async () => {
     growth: formatGrowth(r.growth),
   }));
 };
+
+export const getSalesBycategory = async () => {
+  const CATEGORY_COLORS = {
+    Pork: "#ef4444",
+    Chicken: "#f97316",
+    Seafood: "#3b82f6",
+    Sides: "#10b981",
+    Drinks: "#06b6d4",
+  };
+
+  const rows = await model.getSalesByCategory();
+
+  const totalRevenue = rows.reduce((sum, r) => sum + parseInt(r.value), 0);
+
+  const percentage = (value) => {
+    return totalRevenue > 0
+      ? parseFloat(((parseFloat(value) / totalRevenue) * 100).toFixed(1))
+      : 0;
+  };
+
+  return rows.map((r) => ({
+    name: r.name,
+    value: parseInt(r.value),
+    percentage: percentage(r.value),
+    color: CATEGORY_COLORS[r.name] ?? "#6b7280",
+  }));
+};
