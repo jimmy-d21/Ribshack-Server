@@ -13,6 +13,13 @@ export const getBranchDetails = async (branchId) => {
   return branch;
 };
 
+export const getBranchAnalytics = async (branchId) => {
+  const branch = await model.findById(branchId);
+  if (!branch) throw new AppError("Branch not found", 404);
+
+  return await model.branchAnalytics(branchId);
+};
+
 export const createBranch = async (branchData) => {
   const {
     branch_name,

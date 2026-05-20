@@ -7,6 +7,7 @@ const router = express.Router();
 
 router.get("/", controller.getAllBranches);
 router.get("/:branchId", controller.getBranchDetails);
+router.get("/:branchId/analytics", controller.getBranchAnalytics);
 router.post("/", validate(createBranchSchema), controller.createBranch);
 router.put("/:branchId", validate(updateBranchSchema), controller.updateBranch);
 router.delete("/:branchId", controller.deleteBranch);

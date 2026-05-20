@@ -14,35 +14,35 @@ class AppOrderModel {
         ci.unit_price * ci.quantity AS "price",
         ci.quantity                 AS "quantity",
         (
-          SELECT JSON_BUILD_OBJECT(
-            'drinks', (
-              SELECT COALESCE(JSON_AGG(
-                JSON_BUILD_OBJECT(
-                  'id',    cia.cart_addon_id,
-                  'name',  cia.addon_name,
-                  'price', cia.addon_price
-                )
-              ), '[]'::json)
-              FROM cart_item_addons cia
-              JOIN product_addons pa ON cia.addon_id = pa.addon_id
-              WHERE cia.cart_item_id = ci.cart_item_id
-                AND pa.addon_type = 'drink'
-            ),
-            'extras', (
-              SELECT COALESCE(JSON_AGG(
-                JSON_BUILD_OBJECT(
-                  'id',    cia.cart_addon_id,
-                  'name',  cia.addon_name,
-                  'price', cia.addon_price
-                )
-              ), '[]'::json)
-              FROM cart_item_addons cia
-              JOIN product_addons pa ON cia.addon_id = pa.addon_id
-              WHERE cia.cart_item_id = ci.cart_item_id
-                AND pa.addon_type = 'extra'
-            )
+        SELECT JSON_BUILD_OBJECT(
+          'drinks', (
+            SELECT COALESCE(JSON_AGG(
+              JSON_BUILD_OBJECT(
+                'id',    cia.addon_id,
+                'name',  cia.addon_name,
+                'price', cia.addon_price
+              )
+            ), '[]'::json)
+            FROM cart_item_addons cia
+            JOIN product_addons pa ON cia.addon_id = pa.addon_id
+            WHERE cia.cart_item_id = ci.cart_item_id
+              AND pa.addon_type = 'drink'
+          ),
+          'extras', (
+            SELECT COALESCE(JSON_AGG(
+              JSON_BUILD_OBJECT(
+                'id',    cia.addon_id,
+                'name',  cia.addon_name,
+                'price', cia.addon_price
+              )
+            ), '[]'::json)
+            FROM cart_item_addons cia
+            JOIN product_addons pa ON cia.addon_id = pa.addon_id
+            WHERE cia.cart_item_id = ci.cart_item_id
+              AND pa.addon_type = 'extra'
           )
-        )                           AS "addons"
+        )
+      ) AS "addons"
       FROM carts c
       JOIN cart_items ci  ON c.cart_id     = ci.cart_id
       JOIN products p     ON ci.product_id = p.product_id

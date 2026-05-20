@@ -12,6 +12,12 @@ export const getBranchDetails = asyncHandler(async (req, res) => {
   return res.status(200).json({ success: true, branch });
 });
 
+export const getBranchAnalytics = asyncHandler(async (req, res) => {
+  const { branchId } = req.params;
+  const analytics = await service.getBranchAnalytics(branchId);
+  return res.status(200).json({ success: true, analytics });
+});
+
 export const createBranch = asyncHandler(async (req, res) => {
   const branch = await service.createBranch(req.body);
   return res
