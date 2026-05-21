@@ -18,3 +18,12 @@ export const getWeeklyRevenue = async (branchId) => {
     revenue: parseInt(r.revenue),
   }));
 };
+
+export const getHourlyRevenue = async (branchId) => {
+  const rows = await model.hourlyRevenue(branchId);
+
+  return rows.map((r) => ({
+    hour: r.hour,
+    revenue: parseFloat(r.revenue),
+  }));
+};

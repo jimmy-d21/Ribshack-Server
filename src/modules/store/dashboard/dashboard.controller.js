@@ -12,3 +12,9 @@ export const getWeeklyRevenue = asyncHandler(async (req, res) => {
   const weeklyRevenue = await service.getWeeklyRevenue(branchId);
   return res.status(200).json({ success: true, weeklyRevenue });
 });
+
+export const getHourlyRevenue = asyncHandler(async (req, res) => {
+  const branchId = req.authUser.id;
+  const hourlyRevenue = await service.getHourlyRevenue(branchId);
+  return res.status(200).json({ success: true, hourlyRevenue });
+});
