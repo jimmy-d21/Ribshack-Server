@@ -104,6 +104,31 @@ class StoreDashboardModel {
     const { rows } = await db.query(sql, [branchId]);
     return rows;
   }
+
+  async bestseller(branchId) {
+    const sql = `
+        SELECT
+            p.product_id AS "id",
+            p.product_name AS "name",
+            COALESCE(MAX(pi.image_url), '') AS "imageUrl", 
+            pc.category_name AS "category",
+            COALESCE(SUM(oi.quantity), 0) AS "quantitySold",
+            COALESCE(SUM(oi.quantity * oi.unit_price), 0) AS "revenue"
+            FROM products p
+            LEFT JOIN product_categories pc ON pc.category_id = p.category_id
+            LEFT JOIN product_images pi ON pi.product_id = p.product_id
+            LEFT JOIN order_items oi ON oi.product_id = p.product_id
+            LEFT JOIN orders o ON o.order_id = oi.order_id
+            WHERE (o.order_id IS NULL OR (
+                    o.branch_id = $1 
+                    AND o.order_status != 'CANCELLED' 
+                    AND o.placed_at::date = CURRENT_DATE
+                ))
+            GROUP BY p.product_id, p.product_name, pc.category_name
+            ORDER BY "revenue" DESC, "quantitySold" DESC`;
+    const { rows } = await db.query(sql, [branchId]);
+    return rows[0];
+  }
 }
 
 export const storeDashboardModel = new StoreDashboardModel();

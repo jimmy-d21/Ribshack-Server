@@ -37,3 +37,16 @@ export const getCategorySales = async (branchId) => {
     orders: parseInt(r.orders),
   }));
 };
+
+export const getBestSeller = async (branchId) => {
+  const raw = await model.bestseller(branchId);
+
+  return {
+    productId: raw.id,
+    productName: raw.name,
+    imageUrl: raw.imageUrl,
+    category: raw.category,
+    quantitySold: parseInt(raw.quantitySold),
+    revenue: parseFloat(raw.revenue),
+  };
+};

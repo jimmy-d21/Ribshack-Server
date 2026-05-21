@@ -7,5 +7,6 @@ router.get("/kpis", controller.getKPIS);
 router.get("/revenue/trend", controller.getWeeklyRevenue);
 router.get("/revenue/hourly", controller.getHourlyRevenue);
 router.get("/categories/top", controller.getCategorySales);
+router.get("/bestseller", controller.getBestSeller);
 
 export default router;

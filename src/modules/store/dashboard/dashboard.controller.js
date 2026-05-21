@@ -24,3 +24,9 @@ export const getCategorySales = asyncHandler(async (req, res) => {
   const categorySales = await service.getCategorySales(branchId);
   return res.status(200).json({ success: true, categorySales });
 });
+
+export const getBestSeller = asyncHandler(async (req, res) => {
+  const branchId = req.authUser.id;
+  const bestsellerOfTheDay = await service.getBestSeller(branchId);
+  return res.status(200).json({ success: true, bestsellerOfTheDay });
+});
