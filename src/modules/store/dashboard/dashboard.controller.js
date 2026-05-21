@@ -6,3 +6,9 @@ export const getKPIS = asyncHandler(async (req, res) => {
   const kpis = await service.getKPIS(branchId);
   return res.status(200).json({ success: true, todayStats: kpis });
 });
+
+export const getWeeklyRevenue = asyncHandler(async (req, res) => {
+  const branchId = req.authUser.id;
+  const weeklyRevenue = await service.getWeeklyRevenue(branchId);
+  return res.status(200).json({ success: true, weeklyRevenue });
+});
