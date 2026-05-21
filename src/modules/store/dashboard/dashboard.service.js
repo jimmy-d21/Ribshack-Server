@@ -27,3 +27,13 @@ export const getHourlyRevenue = async (branchId) => {
     revenue: parseFloat(r.revenue),
   }));
 };
+
+export const getCategorySales = async (branchId) => {
+  const rows = await model.categorySales(branchId);
+
+  return rows.map((r) => ({
+    category: r.category,
+    revenue: parseFloat(r.revenue),
+    orders: parseInt(r.orders),
+  }));
+};

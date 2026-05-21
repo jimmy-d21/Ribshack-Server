@@ -18,3 +18,9 @@ export const getHourlyRevenue = asyncHandler(async (req, res) => {
   const hourlyRevenue = await service.getHourlyRevenue(branchId);
   return res.status(200).json({ success: true, hourlyRevenue });
 });
+
+export const getCategorySales = asyncHandler(async (req, res) => {
+  const branchId = req.authUser.id;
+  const categorySales = await service.getCategorySales(branchId);
+  return res.status(200).json({ success: true, categorySales });
+});
