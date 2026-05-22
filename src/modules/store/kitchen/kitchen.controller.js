@@ -13,3 +13,10 @@ export const getOrderDetails = asyncHandler(async (req, res) => {
   const orderDetails = await service.getOrderDetails(orderId, branchId);
   return res.status(200).json({ success: true, orderDetails });
 });
+
+export const updateOrderStatus = asyncHandler(async (req, res) => {
+  const { orderId } = req.params;
+  const branchId = req.authUser.id;
+  const updatedOrder = await service.updateOrderStatus(orderId, branchId);
+  return res.status(200).json({ success: true, updatedOrder });
+});
