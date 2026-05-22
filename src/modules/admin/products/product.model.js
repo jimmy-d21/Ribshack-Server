@@ -1,40 +1,51 @@
 import db from "../../../config/db.js";
 
 class AdminProductModel {
-  // Todo: provide a best seller based on total orders
   async findAll() {
     const sql = `
-      SELECT
-        p.product_id AS id,
-        p.product_name AS name,
-        pc.category_name AS category,
-        p.base_price AS price,
-        p.description,
-        p.has_unli_rice AS "unliRice",
-        p.is_active AS available,
-        pi.image_url AS image,
-        (
-          SELECT COALESCE(
-            JSON_AGG(
-              JSON_BUILD_OBJECT(
-                'id', pa.addon_id,
-                'name', pa.addon_name,
-                'price', pa.additional_price
-              )
-            ),
-            '[]'
-          )
-          FROM product_addons pa
-          WHERE pa.product_id = p.product_id
+    SELECT
+      p.product_id AS id,
+      p.product_name AS name,
+      pc.category_name AS category,
+      p.base_price::float AS price,
+      p.description,
+      p.has_unli_rice AS "unliRice",
+      p.is_active AS available,
+      pi.image_url AS image,
+      
+      (p.product_id IN (
+        SELECT oi_sub.product_id
+        FROM order_items oi_sub
+        JOIN orders o_sub ON o_sub.order_id = oi_sub.order_id
+        WHERE o_sub.order_status != 'CANCELLED'
+        GROUP BY oi_sub.product_id
+        ORDER BY SUM(oi_sub.quantity) DESC
+        LIMIT 5
+      )) AS "isBestseller",
+       
+      (
+        SELECT COALESCE(
+          JSON_AGG(
+            JSON_BUILD_OBJECT(
+              'id', pa.addon_id,
+              'name', pa.addon_name,
+              'price', pa.additional_price::float
+            )
+          ),
+          '[]'::json
+        )
+        FROM product_addons pa
+        WHERE pa.product_id = p.product_id
           AND pa.is_active = TRUE
-        ) AS addons
-      FROM products p
-      JOIN product_categories pc ON p.category_id = pc.category_id
-      LEFT JOIN product_images pi
-        ON p.product_id = pi.product_id
-        AND pi.is_primary = TRUE
-      ORDER BY p.created_at DESC
-    `;
+      ) AS addons
+
+    FROM products p
+    JOIN product_categories pc ON p.category_id = pc.category_id
+    LEFT JOIN product_images pi ON p.product_id = pi.product_id
+                               AND pi.is_primary = TRUE
+    ORDER BY p.created_at DESC;
+  `;
+
     const { rows } = await db.query(sql);
     return rows;
   }

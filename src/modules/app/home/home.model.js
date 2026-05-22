@@ -21,23 +21,31 @@ class AppHomeModel {
     return rows[0];
   }
 
-  // Todo: get this based on orders
   async findBestSellingMenu(branchId) {
-    const sql = `SELECT
-                    bm.branch_id AS "branchId",
-                    p.product_id AS "id",
-                    p.product_name AS "name",
-                    p.description AS "description",
-                    p.base_price AS "price",
-                    pi.image_url AS "image",
-                    p.has_unli_rice AS "includesUnliRice",
-                    bm.is_visible AS "available"
-                FROM products p
-                JOIN branch_menu bm ON p.product_id = bm.product_id
-                LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_primary = TRUE
-                WHERE bm.branch_id = $1 
-                AND bm.is_visible = TRUE 
-                LIMIT 10`;
+    const sql = `
+        SELECT
+          bm.branch_id AS "branchId",
+          p.product_id AS "id",
+          p.product_name AS "name",
+          p.description AS "description",
+          p.base_price::float AS "price",
+          MAX(pi.image_url) AS "image", 
+          p.has_unli_rice AS "includesUnliRice",
+          bm.is_visible AS "available",
+          SUM(oi.quantity)::int AS "totalSold"
+        FROM order_items oi
+        JOIN orders o ON o.order_id = oi.order_id
+                    AND o.branch_id = $1
+                    AND o.order_status != 'CANCELLED'
+        JOIN products p ON p.product_id = oi.product_id
+        JOIN branch_menu bm ON bm.product_id = p.product_id 
+                          AND bm.branch_id = $1
+        LEFT JOIN product_images pi ON p.product_id = pi.product_id 
+                                  AND pi.is_primary = TRUE
+        WHERE bm.is_visible = TRUE
+        GROUP BY bm.branch_id, p.product_id, p.product_name, p.description, p.base_price, p.has_unli_rice, bm.is_visible
+        ORDER BY "totalSold" DESC
+        LIMIT 10;`;
 
     const { rows } = await db.query(sql, [branchId]);
     return rows;
