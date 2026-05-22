@@ -6,13 +6,12 @@ export const getAllRequests = async (status = null) => {
   return model.findAll(status);
 };
 
-// Shared logic for approving or declining a request
 const updateRequestStatus = async (requestId, remarks, adminId, status) => {
   const client = await db.connect();
   try {
     await client.query("BEGIN");
 
-    const request = await model.findById(client, requestId);
+    const request = await model.findById(requestId, client);
     if (!request) throw new AppError("Inventory request not found", 404);
 
     if (request.status === "APPROVED" || request.status === "DECLINED") {
@@ -22,16 +21,34 @@ const updateRequestStatus = async (requestId, remarks, adminId, status) => {
       );
     }
 
-    // Increment stock quantities when the request is approved
     if (status === "APPROVED" && request.items?.length > 0) {
       for (const lineItem of request.items) {
-        if (!lineItem.item_id || !lineItem.quantity) continue;
+        if (!lineItem.itemId || !lineItem.quantity) continue;
+
         await model.incrementItemQuantity(
           client,
-          lineItem.item_id,
+          lineItem.itemId,
           lineItem.quantity,
         );
       }
+
+      await model.createNotification(
+        client,
+        request.branch_id,
+        "Restock Request Approved",
+        `Your restock request for ${request.inventoryName} has been approved. ${remarks ?? "Delivery scheduled for tomorrow."}`,
+        "ACCEPT_REQUEST",
+      );
+    }
+
+    if (status === "DECLINED") {
+      await model.createNotification(
+        client,
+        request.branch_id,
+        "Restock Request Declined",
+        `Your restock request for ${request.inventoryName} has been declined. Reason: ${remarks}`,
+        "DECLINED_REQUEST",
+      );
     }
 
     await model.createStatusLogs(client, requestId, status, adminId, remarks);
