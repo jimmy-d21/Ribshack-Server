@@ -1,5 +1,6 @@
 import db from "../../../config/db.js";
 import AppError from "../../../utils/AppError.js";
+import generateOrderNumber from "../../../utils/generateOrderNumber.js";
 import { appOrdersModel as model } from "./order.model.js";
 
 export const getAllOrders = async (userId) => {
@@ -38,12 +39,21 @@ export const createOrder = async (userId, orderData) => {
       return sum + Number(item.price) + drinksTotal + extrasTotal;
     }, 0);
 
+    let orderNumber;
+    let isDuplicate = true;
+
+    while (isDuplicate) {
+      orderNumber = generateOrderNumber();
+      isDuplicate = await model.orderNumberExists(client, orderNumber);
+    }
+
     const newOrder = await model.createOrder(
       client,
       userId,
       branchId,
       totalAmount,
       paymentMethod,
+      orderNumber,
     );
 
     for (const cart of carts) {
@@ -104,6 +114,14 @@ export const createOrder = async (userId, orderData) => {
     await model.createOrderStatusLogs(client, newOrder.orderId, "PLACED");
 
     await model.clearCart(client, userId);
+
+    const user = await model.findUserById(client, userId);
+
+    const title = "New Order Received";
+    const message = `ORD-${newOrder.orderNumber.split("-")[1]} from ${user.full_name}`;
+    const type = "NEW_ORDER";
+
+    await model.createNotification(client, branchId, title, message, type);
 
     await client.query("COMMIT");
     return newOrder;

@@ -122,6 +122,12 @@ class AppOrderModel {
     return rows;
   }
 
+  async findUserById(client, userId) {
+    const sql = `SELECT * FROM users WHERE user_id = $1`;
+    const { rows } = await client.query(sql, [userId]);
+    return rows[0];
+  }
+
   async findOrderById(orderId, userId) {
     const sql = `
       SELECT
@@ -210,13 +216,21 @@ class AppOrderModel {
     return rows[0] ?? null;
   }
 
-  async createOrder(client, userId, branchId, totalAmount, paymentMethod) {
+  async createOrder(
+    client,
+    userId,
+    branchId,
+    totalAmount,
+    paymentMethod,
+    order_number,
+  ) {
     const sql = `
       INSERT INTO orders
-        (customer_id, branch_id, total_amount, payment_method)
-      VALUES ($1, $2, $3, $4)
+        (customer_id, branch_id, total_amount, payment_method, order_number)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING
         order_id       AS "orderId",
+        order_number   AS "orderNumber",
         order_status   AS "orderStatus",
         total_amount   AS "totalAmount",
         payment_method AS "paymentMethod",
@@ -227,6 +241,7 @@ class AppOrderModel {
       branchId,
       totalAmount,
       paymentMethod,
+      order_number,
     ]);
     return rows[0];
   }
@@ -287,6 +302,12 @@ class AppOrderModel {
       addonPrice,
     ]);
     return rows[0];
+  }
+
+  async orderNumberExists(client, orderNumber) {
+    const sql = `SELECT EXISTS(SELECT 1 FROM orders WHERE order_number = $1)`;
+    const { rows } = await client.query(sql, [orderNumber]);
+    return rows[0].exists;
   }
 
   async createOrderPayment(client, orderId, paymentMethod, amount) {
@@ -355,6 +376,15 @@ class AppOrderModel {
       WHERE customer_id = $1
     `;
     await client.query(sql, [userId]);
+  }
+
+  async createNotification(client, branchId, title, message, type) {
+    const sql = `
+      INSERT INTO store_notifications
+        (branch_id, title, message, notification_type)
+      VALUES ($1, $2, $3, $4)
+    `;
+    await client.query(sql, [branchId, title, message, type]);
   }
 }
 
