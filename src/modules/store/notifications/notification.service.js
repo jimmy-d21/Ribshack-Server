@@ -40,3 +40,7 @@ export const deleteNotification = async (notificationId) => {
 
   await model.findByIdAndDelete(notificationId);
 };
+
+export const deleteAllNotification = async (branchId) => {
+  await model.deleteAll(branchId);
+};

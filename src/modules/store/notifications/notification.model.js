@@ -50,6 +50,12 @@ class StoreNotificationModel {
                  WHERE notification_id = $1`;
     await db.query(sql, [notificationId]);
   }
+
+  async deleteAll(branchId) {
+    const sql = `DELETE FROM store_notifications 
+                 WHERE branch_id = $1`;
+    await db.query(sql, [branchId]);
+  }
 }
 
 export const storeNotificationModel = new StoreNotificationModel();

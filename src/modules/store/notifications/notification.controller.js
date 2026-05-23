@@ -36,3 +36,12 @@ export const deleteNotification = asyncHandler(async (req, res) => {
     message: "Notification deleted successfully",
   });
 });
+
+export const deleteAllNotification = asyncHandler(async (req, res) => {
+  const branchId = req.authUser.id;
+  await service.deleteAllNotification(branchId);
+  return res.status(200).json({
+    success: true,
+    message: "All notifications deleted successfully",
+  });
+});
