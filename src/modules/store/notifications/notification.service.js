@@ -1,3 +1,4 @@
+import AppError from "../../../utils/AppError.js";
 import { storeNotificationModel as model } from "./notification.model.js";
 
 const ACTION_URL_MAP = {
@@ -17,4 +18,14 @@ export const getAllNotifications = async (branchId) => {
     ...n,
     actionUrl: ACTION_URL_MAP[n.type] ?? "/",
   }));
+};
+
+export const updateNotification = async (notificationId) => {
+  const updatedNotification = await model.findByIdAndUpdate(notificationId);
+
+  if (!updatedNotification) {
+    throw new AppError("Notification not found", 404);
+  }
+
+  return updatedNotification;
 };

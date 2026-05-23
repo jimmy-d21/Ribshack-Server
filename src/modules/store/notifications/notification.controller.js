@@ -6,3 +6,14 @@ export const getAllNotifications = asyncHandler(async (req, res) => {
   const notifications = await service.getAllNotifications(branchId);
   return res.status(200).json({ success: true, notifications });
 });
+
+export const updateNotification = asyncHandler(async (req, res) => {
+  const { notificationId } = req.params;
+
+  const updatedNotification = await service.updateNotification(notificationId);
+
+  return res.status(200).json({
+    success: true,
+    data: updatedNotification,
+  });
+});

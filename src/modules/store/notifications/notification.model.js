@@ -15,6 +15,21 @@ class StoreNotificationModel {
     const { rows } = await db.query(sql, [branchId]);
     return rows;
   }
+
+  async findByIdAndUpdate(notificationId) {
+    const sql = `UPDATE store_notifications
+                 SET is_read = TRUE
+                 WHERE notification_id = $1
+                 RETURNING
+                        notification_id         AS id,
+                        notification_type       AS type,
+                        title,
+                        message,
+                        is_read                 AS isRead,
+                        created_at              AS createdAt`;
+    const { rows } = await db.query(sql, [notificationId]);
+    return rows[0];
+  }
 }
 
 export const storeNotificationModel = new StoreNotificationModel();
