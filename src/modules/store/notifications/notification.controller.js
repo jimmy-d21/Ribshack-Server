@@ -26,3 +26,13 @@ export const markAllAsRead = asyncHandler(async (req, res) => {
     message: "All notifications marked as read successfully",
   });
 });
+
+export const deleteNotification = asyncHandler(async (req, res) => {
+  const { notificationId } = req.params;
+  await service.deleteNotification(notificationId);
+
+  return res.status(200).json({
+    success: true,
+    message: "Notification deleted successfully",
+  });
+});

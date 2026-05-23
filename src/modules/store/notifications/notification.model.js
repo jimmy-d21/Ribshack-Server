@@ -38,6 +38,18 @@ class StoreNotificationModel {
                        AND is_read = FALSE`;
     await db.query(sql, [branchId]);
   }
+
+  async findById(notificationId) {
+    const sql = `SELECT EXISTS(FROM store_notifications WHERE notification_id = $1)`;
+    const { rows } = await db.query(sql, [notificationId]);
+    return rows[0].exists;
+  }
+
+  async findByIdAndDelete(notificationId) {
+    const sql = `DELETE FROM store_notifications 
+                 WHERE notification_id = $1`;
+    await db.query(sql, [notificationId]);
+  }
 }
 
 export const storeNotificationModel = new StoreNotificationModel();

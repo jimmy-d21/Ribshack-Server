@@ -33,3 +33,10 @@ export const updateNotification = async (notificationId) => {
 export const markAllAsRead = async (branchId) => {
   await model.markAllAsRead(branchId);
 };
+
+export const deleteNotification = async (notificationId) => {
+  const notification = await model.findById(notificationId);
+  if (!notification) throw new AppError("Notification not found", 404);
+
+  await model.findByIdAndDelete(notificationId);
+};
