@@ -29,3 +29,7 @@ export const updateNotification = async (notificationId) => {
 
   return updatedNotification;
 };
+
+export const markAllAsRead = async (branchId) => {
+  await model.markAllAsRead(branchId);
+};

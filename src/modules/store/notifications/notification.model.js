@@ -30,6 +30,14 @@ class StoreNotificationModel {
     const { rows } = await db.query(sql, [notificationId]);
     return rows[0];
   }
+
+  async markAllAsRead(branchId) {
+    const sql = `UPDATE store_notifications
+                 SET is_read = TRUE
+                 WHERE branch_id = $1
+                       AND is_read = FALSE`;
+    await db.query(sql, [branchId]);
+  }
 }
 
 export const storeNotificationModel = new StoreNotificationModel();
