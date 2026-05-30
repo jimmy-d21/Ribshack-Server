@@ -1,26 +1,28 @@
 import db from "../../../config/db.js";
 
 class AppAddressModel {
-  async findAddressesByUserId(userId) {
+  async findAddressesByUserId(client = db, userId) {
     const sql = `
       SELECT address_id AS "id", address_label AS "label", full_address AS "fullAddress",
              city, province, postal_code AS "postalCode", land_mark AS "landMark",
              is_default AS "isDefault", created_at AS "createdAt"
       FROM customer_addresses
       WHERE customer_id = $1
-      ORDER BY is_default DESC, created_at DESC`;
-    const { rows } = await db.query(sql, [userId]);
+      ORDER BY is_default DESC, created_at DESC
+    `;
+    const { rows } = await client.query(sql, [userId]);
     return rows;
   }
 
-  async findAddressByIdAndUser(addressId, userId) {
+  async findAddressByIdAndUser(client = db, addressId, userId) {
     const sql = `
       SELECT address_id AS "id", address_label AS "label", full_address AS "fullAddress",
              city, province, postal_code AS "postalCode", land_mark AS "landMark",
              is_default AS "isDefault", created_at AS "createdAt"
       FROM customer_addresses
-      WHERE address_id = $1 AND customer_id = $2`;
-    const { rows } = await db.query(sql, [addressId, userId]);
+      WHERE address_id = $1 AND customer_id = $2
+    `;
+    const { rows } = await client.query(sql, [addressId, userId]);
     return rows[0];
   }
 
@@ -40,7 +42,8 @@ class AppAddressModel {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING address_id AS "id", address_label AS "label", full_address AS "fullAddress",
                 city, province, postal_code AS "postalCode", land_mark AS "landMark",
-                is_default AS "isDefault", created_at AS "createdAt"`;
+                is_default AS "isDefault", created_at AS "createdAt"
+    `;
     const values = [
       userId,
       label,
@@ -67,12 +70,13 @@ class AppAddressModel {
     } = addressData;
     const sql = `
       UPDATE customer_addresses
-      SET address_label = $1, full_address = $2, land_mark = $3, city = $4, 
+      SET address_label = $1, full_address = $2, land_mark = $3, city = $4,
           province = $5, postal_code = $6, is_default = $7, updated_at = CURRENT_TIMESTAMP
       WHERE address_id = $8 AND customer_id = $9
       RETURNING address_id AS "id", address_label AS "label", full_address AS "fullAddress",
                 city, province, postal_code AS "postalCode", land_mark AS "landMark",
-                is_default AS "isDefault", created_at AS "createdAt", updated_at AS "updatedAt"`;
+                is_default AS "isDefault", created_at AS "createdAt", updated_at AS "updatedAt"
+    `;
     const values = [
       label,
       fullAddress,
@@ -88,28 +92,33 @@ class AppAddressModel {
     return rows[0];
   }
 
-  async updateAllAddressDefault(userId, addressId) {
+  async updateAllAddressDefault(client = db, userId, addressId) {
     const sql = `
       UPDATE customer_addresses
       SET is_default = FALSE
-      WHERE customer_id = $1 AND address_id != $2`;
-    await db.query(sql, [userId, addressId]);
+      WHERE customer_id = $1 AND address_id != $2
+    `;
+    await client.query(sql, [userId, addressId]);
   }
 
-  async deleteAddress(addressId, userId) {
-    const sql = `DELETE FROM customer_addresses WHERE address_id = $1 AND customer_id = $2`;
-    await db.query(sql, [addressId, userId]);
+  async deleteAddress(client = db, addressId, userId) {
+    const sql = `
+      DELETE FROM customer_addresses
+      WHERE address_id = $1 AND customer_id = $2
+    `;
+    await client.query(sql, [addressId, userId]);
   }
 
-  async setDefaultAddress(addressId, userId) {
+  async setDefaultAddress(client = db, addressId, userId) {
     const sql = `
       UPDATE customer_addresses
       SET is_default = TRUE, updated_at = CURRENT_TIMESTAMP
       WHERE address_id = $1 AND customer_id = $2
       RETURNING address_id AS "id", address_label AS "label", full_address AS "fullAddress",
                 city, province, postal_code AS "postalCode", land_mark AS "landMark",
-                is_default AS "isDefault", created_at AS "createdAt", updated_at AS "updatedAt"`;
-    const { rows } = await db.query(sql, [addressId, userId]);
+                is_default AS "isDefault", created_at AS "createdAt", updated_at AS "updatedAt"
+    `;
+    const { rows } = await client.query(sql, [addressId, userId]);
     return rows[0];
   }
 }

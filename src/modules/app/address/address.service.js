@@ -1,12 +1,13 @@
+import db from "../../../config/db.js";
 import AppError from "../../../utils/AppError.js";
 import { appAddressModel as model } from "./address.model.js";
 
 export const getAllAddress = async (userId) => {
-  return model.findAddressesByUserId(userId);
+  return model.findAddressesByUserId(db, userId);
 };
 
 export const getAddressDetails = async (addressId, userId) => {
-  const address = await model.findAddressByIdAndUser(addressId, userId);
+  const address = await model.findAddressByIdAndUser(db, addressId, userId);
   if (!address) throw new AppError("Address not found", 404);
   return address;
 };
@@ -20,14 +21,18 @@ export const addAddress = async (userId, addressData) => {
   });
 
   if (isDefault) {
-    await model.updateAllAddressDefault(userId, newAddress.id);
+    await model.updateAllAddressDefault(db, userId, newAddress.id);
   }
 
   return newAddress;
 };
 
 export const updateAddress = async (addressId, userId, addressData) => {
-  const existingAddress = await model.findAddressByIdAndUser(addressId, userId);
+  const existingAddress = await model.findAddressByIdAndUser(
+    db,
+    addressId,
+    userId,
+  );
   if (!existingAddress) throw new AppError("Address not found", 404);
 
   const shouldBeDefault =
@@ -36,7 +41,7 @@ export const updateAddress = async (addressId, userId, addressData) => {
       : existingAddress.isDefault;
 
   if (shouldBeDefault) {
-    await model.updateAllAddressDefault(userId, addressId);
+    await model.updateAllAddressDefault(db, userId, addressId);
   }
 
   return model.updateAddress(addressId, userId, {
@@ -54,15 +59,48 @@ export const updateAddress = async (addressId, userId, addressData) => {
 };
 
 export const deleteAddress = async (addressId, userId) => {
-  const address = await model.findAddressByIdAndUser(addressId, userId);
+  const address = await model.findAddressByIdAndUser(db, addressId, userId);
   if (!address) throw new AppError("Address not found", 404);
-  return model.deleteAddress(addressId, userId);
+
+  const isDeletingDefault = address.isDefault;
+
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+
+    await model.deleteAddress(client, addressId, userId);
+
+    if (isDeletingDefault) {
+      const remainingAddresses = await model.findAddressesByUserId(
+        client,
+        userId,
+      );
+
+      const activeAddresses = remainingAddresses.filter(
+        (addr) => addr.id !== Number(addressId),
+      );
+
+      if (activeAddresses.length > 0) {
+        const newDefaultId = activeAddresses[0].id;
+        await model.updateAllAddressDefault(client, userId, newDefaultId);
+        await model.setDefaultAddress(client, newDefaultId, userId);
+      }
+    }
+
+    await client.query("COMMIT");
+    return { success: true };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
 export const setDefaultAddress = async (addressId, userId) => {
-  const address = await model.findAddressByIdAndUser(addressId, userId);
+  const address = await model.findAddressByIdAndUser(db, addressId, userId);
   if (!address) throw new AppError("Address not found", 404);
 
-  await model.updateAllAddressDefault(userId, addressId);
-  return model.setDefaultAddress(addressId, userId);
+  await model.updateAllAddressDefault(db, userId, addressId);
+  return model.setDefaultAddress(db, addressId, userId);
 };

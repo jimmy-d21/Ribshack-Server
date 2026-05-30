@@ -24,6 +24,7 @@ class AppHomeModel {
   async findBestSellingMenu(branchId) {
     const sql = `
         SELECT
+          bm.branch_menu_id AS "menuId",
           bm.branch_id AS "branchId",
           p.product_id AS "id",
           p.product_name AS "name",

@@ -17,9 +17,11 @@ export const getAddressDetails = asyncHandler(async (req, res) => {
 export const addAddress = asyncHandler(async (req, res) => {
   const userId = req.authUser.id;
   const newAddress = await service.addAddress(userId, req.body);
-  return res
-    .status(201)
-    .json({ success: true, message: "Address added successfully", newAddress });
+  return res.status(201).json({
+    success: true,
+    message: "Address added successfully",
+    newAddress,
+  });
 });
 
 export const updateAddress = asyncHandler(async (req, res) => {
