@@ -20,7 +20,7 @@ export const createOrder = async (userId, orderData) => {
 
     const { paymentMethod, branchId, instructions } = orderData;
 
-    const carts = await model.findAll(client, userId);
+    const carts = await model.findAll(client, userId, branchId);
     if (carts.length === 0) throw new AppError("Cart is empty", 400);
 
     const address = await model.findAddressesByUserId(client, userId);

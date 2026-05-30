@@ -1,56 +1,57 @@
 import db from "../../../config/db.js";
 
 class AppCartModel {
-  async findAll(userId) {
+  async findAll(userId, branchId) {
     const sql = `
       SELECT
-        c.cart_id                   AS "id",
-        c.created_at                AS "createdAt",
-        ci.cart_item_id             AS "cartItemId",
-        p.product_name              AS "name",
-        pi.image_url                AS "image",
-        ci.unit_price * ci.quantity AS "price",
-        ci.quantity                 AS "quantity",
-        (
-          SELECT JSON_BUILD_OBJECT(
-            'drinks', (
-              SELECT COALESCE(JSON_AGG(
-                JSON_BUILD_OBJECT(
-                  'id',    cia.cart_addon_id,
-                  'name',  cia.addon_name,
-                  'price', cia.addon_price
-                )
-              ), '[]'::json)
-              FROM cart_item_addons cia
-              JOIN product_addons pa ON cia.addon_id = pa.addon_id
-              WHERE cia.cart_item_id = ci.cart_item_id
-                AND pa.addon_type = 'drink'
-            ),
-            'extras', (
-              SELECT COALESCE(JSON_AGG(
-                JSON_BUILD_OBJECT(
-                  'id',    cia.cart_addon_id,
-                  'name',  cia.addon_name,
-                  'price', cia.addon_price
-                )
-              ), '[]'::json)
-              FROM cart_item_addons cia
-              JOIN product_addons pa ON cia.addon_id = pa.addon_id
-              WHERE cia.cart_item_id = ci.cart_item_id
-                AND pa.addon_type = 'extra'
-            )
+      c.cart_id                  AS "id",
+      p.product_id               AS "productId",
+      c.created_at               AS "createdAt",
+      ci.cart_item_id            AS "cartItemId",
+      p.product_name             AS "name",
+      pi.image_url               AS "image",
+      ci.unit_price * ci.quantity AS "price",
+      ci.quantity                AS "quantity",
+      (
+        SELECT JSON_BUILD_OBJECT(
+          'drinks', (
+            SELECT COALESCE(JSON_AGG(
+              JSON_BUILD_OBJECT(
+                'id',    cia.addon_id,    -- Changed from cia.cart_addon_id
+                'name',  cia.addon_name,
+                'price', cia.addon_price
+              )
+            ), '[]'::json)
+            FROM cart_item_addons cia
+            JOIN product_addons pa ON cia.addon_id = pa.addon_id
+            WHERE cia.cart_item_id = ci.cart_item_id
+              AND pa.addon_type = 'drink'
+          ),
+          'extras', (
+            SELECT COALESCE(JSON_AGG(
+              JSON_BUILD_OBJECT(
+                'id',    cia.addon_id,    -- Changed from cia.cart_addon_id
+                'name',  cia.addon_name,
+                'price', cia.addon_price
+              )
+            ), '[]'::json)
+            FROM cart_item_addons cia
+            JOIN product_addons pa ON cia.addon_id = pa.addon_id
+            WHERE cia.cart_item_id = ci.cart_item_id
+              AND pa.addon_type = 'extra'
           )
-        )                           AS "addons"
-      FROM carts c
-      JOIN cart_items ci  ON c.cart_id     = ci.cart_id
-      JOIN products p     ON ci.product_id = p.product_id
-      JOIN product_images pi
-        ON p.product_id  = pi.product_id
-       AND pi.is_primary = TRUE
-      WHERE c.customer_id = $1
-      ORDER BY ci.created_at DESC
+        )
+      )                          AS "addons"
+    FROM carts c
+    JOIN cart_items ci  ON c.cart_id     = ci.cart_id
+    JOIN products p     ON ci.product_id = p.product_id
+    JOIN product_images pi
+      ON p.product_id  = pi.product_id
+    AND pi.is_primary = TRUE
+    WHERE c.customer_id = $1 AND c.branch_id = $2
+    ORDER BY ci.created_at DESC
     `;
-    const { rows } = await db.query(sql, [userId]);
+    const { rows } = await db.query(sql, [userId, branchId]);
     return rows;
   }
 
@@ -106,13 +107,65 @@ class AppCartModel {
     return rows[0] ?? null;
   }
 
-  async findCartByUserId(client = db, userId) {
+  async findCartItem(client = db, cartItemId) {
+    const sql = `
+      SELECT
+        c.cart_id                  AS "id",
+        c.created_at               AS "createdAt",
+        ci.cart_item_id            AS "cartItemId",
+        p.product_name             AS "name",
+        pi.image_url               AS "image",
+        ci.unit_price * ci.quantity AS "price",
+        ci.quantity                AS "quantity",
+        (
+          SELECT JSON_BUILD_OBJECT(
+            'drinks', (
+              SELECT COALESCE(JSON_AGG(
+                JSON_BUILD_OBJECT(
+                  'id',    cia.addon_id,
+                  'name',  cia.addon_name,
+                  'price', cia.addon_price
+                )
+              ), '[]'::json)
+              FROM cart_item_addons cia
+              JOIN product_addons pa ON cia.addon_id = pa.addon_id
+              WHERE cia.cart_item_id = ci.cart_item_id
+                AND pa.addon_type = 'drink'
+            ),
+            'extras', (
+              SELECT COALESCE(JSON_AGG(
+                JSON_BUILD_OBJECT(
+                  'id',    cia.addon_id,
+                  'name',  cia.addon_name,
+                  'price', cia.addon_price
+                )
+              ), '[]'::json)
+              FROM cart_item_addons cia
+              JOIN product_addons pa ON cia.addon_id = pa.addon_id
+              WHERE cia.cart_item_id = ci.cart_item_id
+                AND pa.addon_type = 'extra'
+            )
+          )
+        )                          AS "addons"
+      FROM carts c
+      JOIN cart_items ci  ON c.cart_id     = ci.cart_id
+      JOIN products p     ON ci.product_id = p.product_id
+      JOIN product_images pi
+        ON p.product_id  = pi.product_id
+       AND pi.is_primary = TRUE
+      WHERE ci.cart_item_id = $1
+    `;
+    const { rows } = await client.query(sql, [cartItemId]);
+    return rows[0] ?? null;
+  }
+
+  async findCartByUserId(client = db, userId, branchId) {
     const sql = `
       SELECT cart_id, customer_id, branch_id
       FROM   carts
-      WHERE  customer_id = $1
+      WHERE  customer_id = $1 AND branch_id = $2
     `;
-    const { rows } = await client.query(sql, [userId]);
+    const { rows } = await client.query(sql, [userId, branchId]);
     return rows[0] ?? null;
   }
 

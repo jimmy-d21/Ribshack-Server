@@ -14,6 +14,9 @@ export const getBranchDetails = asyncHandler(async (req, res) => {
 
 export const getAllBranchMenu = asyncHandler(async (req, res) => {
   const { branchId } = req.params;
-  const branchMenu = await service.getAllBranchMenu(branchId);
+  const { category } = req.query;
+
+  const branchMenu = await service.getAllBranchMenu(branchId, category);
+
   return res.status(200).json({ success: true, branchMenu });
 });

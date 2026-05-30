@@ -32,7 +32,7 @@ export const createBranch = async (branchData) => {
     password,
   } = branchData;
 
-  const existingRegion = await model.findRegionByName(region);
+  const existingRegion = await adminBranchesModel.findRegionByName(region);
   if (!existingRegion) {
     throw new AppError(
       `Region "${region}" not found. Valid regions are: Visayas, Luzon, Mindanao`,
@@ -40,13 +40,13 @@ export const createBranch = async (branchData) => {
     );
   }
 
-  const takenUsername = await model.findByUsername(username);
+  const takenUsername = await adminBranchesModel.findByUsername(username);
   if (takenUsername) throw new AppError("Username is already taken", 409);
 
   const salt = await bcrypt.genSalt(10);
   const passwordHash = await bcrypt.hash(password, salt);
 
-  return model.create({
+  const newBranch = await adminBranchesModel.createWithMenu({
     name: branch_name,
     location: full_address,
     city,
@@ -56,6 +56,8 @@ export const createBranch = async (branchData) => {
     username,
     password_hash: passwordHash,
   });
+
+  return newBranch;
 };
 
 export const updateBranch = async (branchId, branchData) => {

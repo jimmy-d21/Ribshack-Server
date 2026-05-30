@@ -11,7 +11,7 @@ class AppBranchModel {
         br.region_name AS region,
         b.manager_name AS "manager",
         b.contact_number AS "contactNumber",
-        b.is_open,
+        b.is_open        AS "isOpen",
         b.created_at AS "createdAt"
       FROM branches b
       JOIN branches_regions br ON b.region_id = br.region_id
@@ -44,33 +44,37 @@ class AppBranchModel {
     return rows[0];
   }
 
-  async findAllBranchMenu(branchId) {
-    const sql = `SELECT
-                  pc.category_name AS category,
-                  JSON_AGG(
-                    JSON_BUILD_OBJECT(
-                      'branchId', bm.branch_id,
-                      'id', p.product_id,
-                      'name', p.product_name,
-                      'description', p.description,
-                      'price', p.base_price,
-                      'image', pi.image_url,
-                      'includesUnliRice', p.has_unli_rice,
-                      'available', bm.is_visible
-                    )
-                    ORDER BY p.product_name ASC
-                  ) AS products
-                FROM products p
-                JOIN branch_menu bm ON p.product_id = bm.product_id
-                JOIN product_categories pc ON p.category_id = pc.category_id
-                LEFT JOIN product_images pi 
-                  ON p.product_id = pi.product_id 
-                  AND pi.is_primary = TRUE
-                WHERE bm.branch_id = $1
-                GROUP BY pc.category_name, bm.branch_id
-                ORDER BY pc.category_name ASC;`;
+  async findAllBranchMenu(branchId, category = null) {
+    let sql = `SELECT 
+              p.product_id AS "id",
+              bm.branch_id AS "branchId",
+              bm.branch_menu_id AS "menuId",
+              p.product_name AS "name",
+              pc.category_name AS "category",
+              p.description AS "description",
+              p.base_price AS "price",
+              pi.image_url AS "image",
+              p.has_unli_rice AS "includesUnliRice",
+              bm.is_visible AS "available"
+            FROM products p
+            JOIN branch_menu bm ON p.product_id = bm.product_id
+            JOIN product_categories pc ON p.category_id = pc.category_id
+            LEFT JOIN product_images pi 
+              ON p.product_id = pi.product_id 
+              AND pi.is_primary = TRUE
+            WHERE bm.branch_id = $1
+            `;
 
-    const { rows } = await db.query(sql, [branchId]);
+    const queryParams = [branchId];
+
+    if (category) {
+      queryParams.push(category);
+      sql += ` AND pc.category_name = $2 `;
+    }
+
+    sql += ` ORDER BY pc.display_order ASC, p.product_name ASC`;
+
+    const { rows } = await db.query(sql, queryParams);
     return rows;
   }
 }

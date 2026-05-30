@@ -5,7 +5,7 @@ import { addToCartSchema, updateCartSchema } from "./cart.schema.js";
 
 const router = express.Router();
 
-router.get("/", controller.getAllCarts);
+router.get("/:branchId", controller.getAllCarts);
 router.post("/items", validate(addToCartSchema), controller.addToCart);
 router.put("/items/:itemId", validate(updateCartSchema), controller.updateCart);
 router.delete("/items/:itemId", controller.deleteCartItem);

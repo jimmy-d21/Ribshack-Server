@@ -3,13 +3,18 @@ import AppError from "../../../utils/AppError.js";
 import { appAuthModel as model } from "./auth.model.js";
 
 export const register = async (userData) => {
-  const { fullName, email, password, contactNumber } = userData;
+  const { fullName, email, password, confirmPassword, contactNumber } =
+    userData;
 
   const existingEmail = await model.findByEmail(email);
   if (existingEmail) throw new AppError("Email already exists", 409);
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
+
+  if (password !== confirmPassword) {
+    throw new AppError("Passwords do not match", 400);
+  }
 
   return model.createAccount({
     fullName,

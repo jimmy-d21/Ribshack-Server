@@ -1,7 +1,7 @@
 import db from "../../../config/db.js";
 
 class AppOrderModel {
-  async findAll(client = db, userId) {
+  async findAll(client = db, userId, branchId) {
     const sql = `
       SELECT
         c.cart_id                   AS "id",
@@ -49,10 +49,10 @@ class AppOrderModel {
       JOIN product_images pi
         ON p.product_id  = pi.product_id
        AND pi.is_primary = TRUE
-      WHERE c.customer_id = $1
+      WHERE c.customer_id = $1 AND c.branch_id = $2
       ORDER BY ci.created_at DESC
     `;
-    const { rows } = await client.query(sql, [userId]);
+    const { rows } = await client.query(sql, [userId, branchId]);
     return rows;
   }
 

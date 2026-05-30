@@ -3,7 +3,8 @@ import * as service from "./cart.service.js";
 
 export const getAllCarts = asyncHandler(async (req, res) => {
   const userId = req.authUser.id;
-  const carts = await service.getAllCarts(userId);
+  const { branchId } = req.params;
+  const carts = await service.getAllCarts(userId, branchId);
   return res.status(200).json({ success: true, carts });
 });
 
@@ -19,7 +20,13 @@ export const addToCart = asyncHandler(async (req, res) => {
 
 export const updateCart = asyncHandler(async (req, res) => {
   const { itemId } = req.params;
-  const updatedCart = await service.updateCart(Number(itemId), req.body);
+
+  const updatedCart = await service.updateCart(Number(itemId), {
+    quantity: req.body.quantity,
+    price: req.body.price,
+    addOns: req.body.addOns || [],
+  });
+
   return res.status(200).json({
     success: true,
     message: "Cart item updated successfully",

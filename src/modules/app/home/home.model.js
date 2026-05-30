@@ -29,23 +29,32 @@ class AppHomeModel {
           p.product_name AS "name",
           p.description AS "description",
           p.base_price::float AS "price",
-          MAX(pi.image_url) AS "image", 
+          (
+            SELECT pi.image_url 
+            FROM product_images pi 
+            WHERE pi.product_id = p.product_id 
+              AND pi.is_primary = TRUE 
+            LIMIT 1
+          ) AS "image", 
           p.has_unli_rice AS "includesUnliRice",
           bm.is_visible AS "available",
-          SUM(oi.quantity)::int AS "totalSold"
-        FROM order_items oi
-        JOIN orders o ON o.order_id = oi.order_id
-                    AND o.branch_id = $1
-                    AND o.order_status != 'CANCELLED'
-        JOIN products p ON p.product_id = oi.product_id
-        JOIN branch_menu bm ON bm.product_id = p.product_id 
-                          AND bm.branch_id = $1
-        LEFT JOIN product_images pi ON p.product_id = pi.product_id 
-                                  AND pi.is_primary = TRUE
-        WHERE bm.is_visible = TRUE
-        GROUP BY bm.branch_id, p.product_id, p.product_name, p.description, p.base_price, p.has_unli_rice, bm.is_visible
+          
+          -- Correlated Subquery replaces the need for GROUP BY
+          COALESCE((
+            SELECT SUM(oi.quantity)::int
+            FROM order_items oi
+            JOIN orders o ON o.order_id = oi.order_id
+            WHERE oi.product_id = p.product_id
+              AND o.branch_id = bm.branch_id
+              AND o.order_status != 'CANCELLED'
+          ), 0) AS "totalSold"
+
+        FROM branch_menu bm
+        JOIN products p ON p.product_id = bm.product_id
+        WHERE bm.branch_id = $1
+          AND bm.is_visible = TRUE
         ORDER BY "totalSold" DESC
-        LIMIT 10;`;
+        LIMIT 10`;
 
     const { rows } = await db.query(sql, [branchId]);
     return rows;

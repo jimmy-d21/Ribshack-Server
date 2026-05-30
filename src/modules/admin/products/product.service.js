@@ -61,7 +61,7 @@ export const createProduct = async (productData) => {
     // Register the product in all existing branches on creation
     const branches = await branchModel.findAll();
     for (const branch of branches) {
-      const branchId = branch.branch_id || branch.id;
+      const branchId = branch.id;
       await model.createBranchProduct(client, branchId, productId);
     }
 

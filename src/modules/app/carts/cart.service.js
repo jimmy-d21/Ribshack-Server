@@ -2,8 +2,8 @@ import AppError from "../../../utils/AppError.js";
 import { appCartModel as model } from "./cart.model.js";
 import db from "../../../config/db.js";
 
-export const getAllCarts = async (userId) => {
-  return model.findAll(userId);
+export const getAllCarts = async (userId, branchId) => {
+  return model.findAll(userId, branchId);
 };
 
 export const addToCart = async (userId, cartData) => {
@@ -13,7 +13,7 @@ export const addToCart = async (userId, cartData) => {
 
     const { branchId, productId, quantity, price, addOns = [] } = cartData;
 
-    let cart = await model.findCartByUserId(client, userId);
+    let cart = await model.findCartByUserId(client, userId, branchId);
     if (!cart) {
       cart = await model.createCart(client, userId, branchId);
     }
@@ -55,16 +55,14 @@ export const updateCart = async (itemId, cartData) => {
     const cartItem = await model.findCartItem(client, itemId);
     if (!cartItem) throw new AppError("Cart item not found", 404);
 
-    const updatedCartItem = await model.updateCartItem(client, itemId, {
+    await model.updateCartItem(client, itemId, {
       quantity,
       unitPrice: price,
     });
 
-    // Replace all add-ons with the incoming set
     await model.deleteAllAddons(client, itemId);
-
     for (const addOn of addOns) {
-      await model.createCartAddon(client, updatedCartItem.cart_item_id, {
+      await model.createCartAddon(client, itemId, {
         addonId: addOn.id,
         addonName: addOn.name,
         addonPrice: addOn.price,
@@ -72,6 +70,8 @@ export const updateCart = async (itemId, cartData) => {
     }
 
     await client.query("COMMIT");
+
+    const updatedCartItem = await model.findCartItem(client, itemId);
     return updatedCartItem;
   } catch (error) {
     await client.query("ROLLBACK");

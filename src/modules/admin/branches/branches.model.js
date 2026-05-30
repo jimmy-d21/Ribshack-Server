@@ -290,6 +290,87 @@ class AdminBranchesModel {
     const { rows } = await db.query(sql, [branchId]);
     return rows[0];
   }
+
+  async findAllProducts() {
+    const sql = `SELECT * FROM products`;
+    const { rows } = await db.query(sql);
+    return rows;
+  }
+
+  async createWithMenu(branchData) {
+    const {
+      name,
+      location,
+      city,
+      region_id,
+      manager,
+      phone,
+      username,
+      password_hash,
+    } = branchData;
+
+    const client = await db.getClient();
+
+    try {
+      await client.query("BEGIN");
+
+      const branchSql = `
+        INSERT INTO branches
+          (branch_name, full_address, city, region_id, manager_name, contact_number, username, password_hash)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING branch_id, branch_name, full_address, city, region_id,
+                  manager_name, contact_number, username, is_open, created_at
+      `;
+
+      const branchResult = await client.query(branchSql, [
+        name,
+        location,
+        city,
+        region_id,
+        manager,
+        phone,
+        username,
+        password_hash,
+      ]);
+
+      const newBranch = branchResult.rows[0];
+      const newBranchId = newBranch.branch_id;
+
+      const productsResult = await client.query(
+        "SELECT product_id FROM products WHERE is_active = TRUE",
+      );
+      const products = productsResult.rows;
+
+      if (products.length > 0) {
+        for (const product of products) {
+          const availabilitySql = `
+            INSERT INTO branch_product_availability (branch_id, product_id, is_available)
+            VALUES ($1, $2, TRUE)
+            ON CONFLICT (branch_id, product_id) DO NOTHING
+          `;
+          await client.query(availabilitySql, [
+            newBranchId,
+            product.product_id,
+          ]);
+
+          const menuSql = `
+            INSERT INTO branch_menu (branch_id, product_id, price_override, is_visible)
+            VALUES ($1, $2, NULL, TRUE)
+            ON CONFLICT (branch_id, product_id) DO NOTHING
+          `;
+          await client.query(menuSql, [newBranchId, product.product_id]);
+        }
+      }
+
+      await client.query("COMMIT");
+      return newBranch;
+    } catch (transactionError) {
+      await client.query("ROLLBACK");
+      throw transactionError;
+    } finally {
+      client.release();
+    }
+  }
 }
 
 export const adminBranchesModel = new AdminBranchesModel();

@@ -18,7 +18,7 @@ class AppProductModel {
                 JOIN branch_menu bm ON p.product_id = bm.product_id
                 JOIN product_categories pc ON p.category_id = pc.category_id
                 LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_primary = TRUE
-                WHERE bm.branch_menu_id = $1
+                WHERE p.product_id = $1
                 AND p.is_active = TRUE`;
     const { rows } = await db.query(sql, [productId]);
     return rows[0];
@@ -35,7 +35,7 @@ class AppProductModel {
                     bm.is_visible AS "available"
                 FROM products p
                 JOIN branch_menu bm ON p.product_id = bm.product_id
-                WHERE bm.branch_menu_id = $1
+                WHERE p.product_id = $1
                 AND p.is_active = TRUE`;
     const { rows } = await db.query(sql, [productId]);
     return rows[0];
