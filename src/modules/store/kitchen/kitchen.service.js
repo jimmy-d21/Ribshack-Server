@@ -21,6 +21,7 @@ export const getOrderDetails = async (orderId, branchId) => {
   return {
     id: raw.id,
     customerName: raw.customerName,
+    contactNumber: raw.contactNumber,
     status: raw.status,
     orderReceivedAt: raw.orderReceivedAt,
     deliveryAddress: raw.deliveryAddress,
@@ -31,7 +32,13 @@ export const getOrderDetails = async (orderId, branchId) => {
 };
 
 export const updateOrderStatus = async (orderId, branchId) => {
-  const ORDER_STATUSES = ["PLACED", "PREPARING", "READY", "OUT_FOR_DELIVERY"];
+  const ORDER_STATUSES = [
+    "PLACED",
+    "PREPARING",
+    "READY",
+    "OUT_FOR_DELIVERY",
+    "DELIVERED",
+  ];
   const order = await model.findOrderById(orderId, branchId);
 
   if (!order) throw new AppError("Order not found", 404);

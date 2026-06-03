@@ -53,6 +53,7 @@ class StoreKitchenModel {
         SELECT
             o.order_id           AS id,
             u.full_name          AS "customerName",
+            u.contact_number     AS "contactNumber",
             o.order_status       AS status,
             o.placed_at          AS "orderReceivedAt",
             dd.full_address      AS "deliveryAddress",

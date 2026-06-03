@@ -14,7 +14,7 @@ export const updateNotification = asyncHandler(async (req, res) => {
 
   return res.status(200).json({
     success: true,
-    data: updatedNotification,
+    updatedNotification,
   });
 });
 

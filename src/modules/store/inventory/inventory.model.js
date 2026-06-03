@@ -7,9 +7,9 @@ class StoreInventoryModel {
                     branch_id AS "branchId",
                     item_name AS "itemName",
                     item_type AS "itemType",
-                    current_quantity AS "currentStock",
-                    reorder_threshold AS "minimumThreshold",
-                    max_threshold AS "maximumThreshold",
+                    current_quantity::float AS "currentStock",
+                    reorder_threshold::float AS "minimumThreshold",
+                    max_threshold::float AS "maximumThreshold",
                     unit_of_measure AS unit,
                     CASE 
                         WHEN current_quantity <= (reorder_threshold * 0.50) THEN 'Critical'
@@ -18,7 +18,8 @@ class StoreInventoryModel {
                     END AS status
                 FROM inventory_items
                 WHERE branch_id = $1
-                ${criticalOnly ? "AND current_quantity <= (reorder_threshold * 0.50)" : ""}`;
+                ${criticalOnly ? "AND current_quantity <= (reorder_threshold * 0.50)" : ""}
+                ORDER BY created_at DESC`;
     const { rows } = await db.query(sql, [branchId]);
     return rows;
   }

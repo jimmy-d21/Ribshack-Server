@@ -19,7 +19,7 @@ class StoreMenuModel {
                 JOIN products AS p ON bm.product_id = p.product_id
                 JOIN product_categories AS pc ON p.category_id = pc.category_id
                 JOIN product_images AS pi ON p.product_id = pi.product_id
-                WHERE bm.branch_id = $1 AND p.is_active = TRUE
+                WHERE bm.branch_id = $1
                 ORDER BY bm.created_at DESC`;
     const { rows } = await db.query(sql, [branchId]);
     return rows;

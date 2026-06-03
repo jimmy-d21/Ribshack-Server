@@ -14,7 +14,7 @@ const generateTokenAndSetCookies = (res, currentId, role) => {
   res.cookie("token", token, {
     httpOnly: true,
     secure: ENV.server.node_env === "production",
-    sameSite: "strict",
+    sameSite: ENV.server.node_env === "production" ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: "/",
   });
