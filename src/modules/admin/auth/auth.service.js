@@ -6,10 +6,10 @@ export const login = async (email, password) => {
   const admin = await model.findByEmail(email);
   if (!admin) throw new AppError("Invalid credentials", 401);
 
-  const isMatch = password === admin.password_hash;
+  const isMatch = password === admin.password;
   if (!isMatch) throw new AppError("Invalid credentials", 401);
 
-  delete admin.password_hash;
+  delete admin.password;
   return admin;
 };
 
