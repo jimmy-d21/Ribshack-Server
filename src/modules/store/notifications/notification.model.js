@@ -11,6 +11,7 @@ class StoreNotificationModel {
                         created_at              AS createdAt
                 FROM store_notifications
                 WHERE branch_id = $1
+                ORDER BY created_at DESC
                         `;
     const { rows } = await db.query(sql, [branchId]);
     return rows;
