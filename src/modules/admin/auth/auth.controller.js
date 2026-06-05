@@ -12,7 +12,7 @@ export const login = asyncHandler(async (req, res) => {
 });
 
 export const logout = asyncHandler(async (req, res) => {
-  res.cookie("token", "", { httpOnly: true, expires: new Date(0) });
+  res.cookie("admin_token", "", { httpOnly: true, expires: new Date(0) });
   return res
     .status(200)
     .json({ success: true, message: "Logout successfully" });

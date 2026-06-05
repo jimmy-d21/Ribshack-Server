@@ -11,7 +11,23 @@ const generateTokenAndSetCookies = (res, currentId, role) => {
     expiresIn: "7d",
   });
 
-  res.cookie("token", token, {
+  let cookieName;
+  switch (role) {
+    case "admin":
+      cookieName = "admin_token";
+      break;
+    case "branch":
+      cookieName = "branch_token";
+      break;
+    case "customer":
+      cookieName = "customer_token";
+      break;
+    default:
+      cookieName = "app_token";
+      break;
+  }
+
+  res.cookie(cookieName, token, {
     httpOnly: true,
     secure: ENV.server.node_env === "production",
     sameSite: ENV.server.node_env === "production" ? "none" : "lax",

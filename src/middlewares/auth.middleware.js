@@ -1,35 +1,70 @@
 import jwt from "jsonwebtoken";
 import ENV from "../utils/env.js";
 
+const roleCookieMap = {
+  admin: "admin_token",
+  branch: "branch_token",
+  customer: "customer_token",
+};
+
 const verifyToken = async (req, res, next) => {
   try {
-    const cookiesToken = req.cookies?.token;
+    const decodedTokens = [];
+
+    for (const [role, cookieName] of Object.entries(roleCookieMap)) {
+      const cookieToken = req.cookies?.[cookieName];
+      if (cookieToken) {
+        try {
+          const decoded = jwt.verify(cookieToken, ENV.jwt.secret);
+          decodedTokens.push(decoded);
+        } catch {
+          continue;
+        }
+      }
+    }
+
     const bearToken = req.headers.authorization?.startsWith("Bearer ")
       ? req.headers.authorization.split(" ")[1]
       : null;
 
-    const token = cookiesToken || bearToken;
-    if (!token) {
-      return res
-        .status(401)
-        .json({ message: "Unauthorized - No token provided" });
+    if (bearToken) {
+      try {
+        const decoded = jwt.verify(bearToken, ENV.jwt.secret);
+        decodedTokens.push(decoded);
+      } catch {}
     }
 
-    const decoded = jwt.verify(token, ENV.jwt.secret);
-    req.authUser = decoded;
+    if (decodedTokens.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized - No token provided",
+      });
+    }
+
+    req.decodedTokens = decodedTokens;
     next();
   } catch (error) {
-    return res.status(401).json({ message: "Unauthorized - Invalid token" });
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized - Invalid token",
+    });
   }
 };
 
 const authorizeRoles = (...allowedRoles) => {
   return (req, res, next) => {
-    if (!allowedRoles.includes(req.authUser.role)) {
+    const matchedToken = req.decodedTokens?.find((decoded) =>
+      allowedRoles.includes(decoded.role),
+    );
+
+    if (!matchedToken) {
       return res.status(403).json({
+        success: false,
         message: `Forbidden - Required role: ${allowedRoles.join(" or ")}`,
       });
     }
+
+    req.authUser = matchedToken;
     next();
   };
 };
