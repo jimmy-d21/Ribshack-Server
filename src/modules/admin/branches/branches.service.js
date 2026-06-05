@@ -30,23 +30,25 @@ export const createBranch = async (branchData) => {
     contact_number,
     username,
     password,
+    confirmPassword,
   } = branchData;
 
-  const existingRegion = await adminBranchesModel.findRegionByName(region);
+  const existingRegion = await model.findRegionByName(region);
   if (!existingRegion) {
-    throw new AppError(
-      `Region "${region}" not found. Valid regions are: Visayas, Luzon, Mindanao`,
-      400,
-    );
+    throw new AppError(`Region "${region}" not found`, 400);
   }
 
-  const takenUsername = await adminBranchesModel.findByUsername(username);
+  if (confirmPassword !== password) {
+    throw new AppError("Passwords do not match", 400);
+  }
+
+  const takenUsername = await model.findByUsername(username);
   if (takenUsername) throw new AppError("Username is already taken", 409);
 
   const salt = await bcrypt.genSalt(10);
   const passwordHash = await bcrypt.hash(password, salt);
 
-  const newBranch = await adminBranchesModel.createWithMenu({
+  const newBranch = await model.createWithMenu({
     name: branch_name,
     location: full_address,
     city,
@@ -57,7 +59,7 @@ export const createBranch = async (branchData) => {
     password_hash: passwordHash,
   });
 
-  return newBranch;
+  return await model.findById(newBranch.branch_id);
 };
 
 export const updateBranch = async (branchId, branchData) => {
@@ -65,35 +67,65 @@ export const updateBranch = async (branchId, branchData) => {
     branch_name,
     full_address,
     city,
+    status,
     manager_name,
     contact_number,
     username,
+    confirmPassword,
     password,
+    newPassword,
   } = branchData;
 
   const existingBranch = await model.findById(branchId);
-  if (!existingBranch) throw new AppError("Branch not found", 404);
+
+  if (!existingBranch) {
+    throw new AppError("Branch not found", 404);
+  }
 
   if (username && username !== existingBranch.username) {
     const takenUsername = await model.findByUsername(username);
-    if (takenUsername) throw new AppError("Username is already taken", 409);
+    if (takenUsername) {
+      throw new AppError("Username is already taken", 409);
+    }
   }
 
   let passwordHash = null;
-  if (password && password.trim()) {
+
+  if (newPassword && newPassword.trim()) {
+    if (!password) {
+      throw new AppError(
+        "Current password is required to set a new password",
+        400,
+      );
+    }
+
+    if (confirmPassword !== newPassword) {
+      throw new AppError("New password does not match", 400);
+    }
+
+    const isMatch = await bcrypt.compare(password, existingBranch.password);
+    if (!isMatch) {
+      throw new AppError("Current password is incorrect", 401);
+    }
+
     const salt = await bcrypt.genSalt(10);
-    passwordHash = await bcrypt.hash(password, salt);
+    passwordHash = await bcrypt.hash(newPassword, salt);
   }
 
-  return model.update(branchId, {
+  const updatedBranch = await model.update(branchId, {
     name: branch_name || existingBranch.name,
     location: full_address || existingBranch.location,
     city: city || existingBranch.city,
+    status: typeof status === "boolean" ? status : existingBranch.status,
     manager: manager_name || existingBranch.manager,
     phone: contact_number || existingBranch.phone,
     username: username || existingBranch.username,
-    password_hash: passwordHash,
+    ...(passwordHash ? { password_hash: passwordHash } : {}),
   });
+
+  const branch = await model.findById(updatedBranch.branch_id);
+
+  return branch;
 };
 
 export const deleteBranch = async (branchId) => {

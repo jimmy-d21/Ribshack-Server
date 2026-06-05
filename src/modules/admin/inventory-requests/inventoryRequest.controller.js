@@ -12,12 +12,16 @@ export const approveRequest = asyncHandler(async (req, res) => {
   const { remarks } = req.body;
   const adminId = req.authUser.id;
 
-  const data = await service.approveRequest(requestId, remarks, adminId);
+  const updatedRequest = await service.approveRequest(
+    requestId,
+    remarks,
+    adminId,
+  );
   return res.status(200).json({
     success: true,
     message:
       "Inventory request approved and store inventory updated successfully",
-    data,
+    updatedRequest,
   });
 });
 
@@ -26,10 +30,14 @@ export const declineRequest = asyncHandler(async (req, res) => {
   const { remarks } = req.body;
   const adminId = req.authUser.id;
 
-  const data = await service.declineRequest(requestId, remarks, adminId);
+  const updatedRequest = await service.declineRequest(
+    requestId,
+    remarks,
+    adminId,
+  );
   return res.status(200).json({
     success: true,
     message: "Inventory request declined successfully",
-    data,
+    updatedRequest,
   });
 });

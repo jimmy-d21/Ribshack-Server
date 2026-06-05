@@ -5,7 +5,7 @@ import * as service from "./auth.service.js";
 export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   const admin = await service.login(email, password);
-  generateTokenAndSetCookies(res, admin.admin_id, "admin");
+  generateTokenAndSetCookies(res, admin.id, "admin");
   return res
     .status(200)
     .json({ success: true, message: "Login successfully", admin });

@@ -49,6 +49,7 @@ class AdminBranchesModel {
         br.region_name AS region,
         b.manager_name AS manager,
         b.contact_number AS phone,
+        b.password_hash AS password,
         b.username,
         b.is_open AS status,
         b.created_at
@@ -129,6 +130,7 @@ class AdminBranchesModel {
       "username = $7",
       "updated_at = CURRENT_TIMESTAMP",
     ];
+
     const values = [name, location, city, status, manager, phone, username];
 
     if (password_hash) {
@@ -137,14 +139,25 @@ class AdminBranchesModel {
     }
 
     values.push(branchId);
+
     const sql = `
-      UPDATE branches
-      SET ${columns.join(", ")}
-      WHERE branch_id = $${values.length}
-      RETURNING branch_id, branch_name, full_address, city,
-                is_open, manager_name, contact_number, username, updated_at
-    `;
+    UPDATE branches
+    SET ${columns.join(", ")}
+    WHERE branch_id = $${values.length}
+    RETURNING
+      branch_id,
+      branch_name,
+      full_address,
+      city,
+      is_open,
+      manager_name,
+      contact_number,
+      username,
+      updated_at
+  `;
+
     const { rows } = await db.query(sql, values);
+
     return rows[0];
   }
 
@@ -309,18 +322,17 @@ class AdminBranchesModel {
       password_hash,
     } = branchData;
 
-    const client = await db.getClient();
+    const client = await db.connect();
 
     try {
       await client.query("BEGIN");
 
       const branchSql = `
-        INSERT INTO branches
-          (branch_name, full_address, city, region_id, manager_name, contact_number, username, password_hash)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING branch_id, branch_name, full_address, city, region_id,
-                  manager_name, contact_number, username, is_open, created_at
-      `;
+      INSERT INTO branches
+        (branch_name, full_address, city, region_id, manager_name, contact_number, username, password_hash)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING branch_id, branch_name, full_address, city, region_id, manager_name, contact_number, username, is_open, created_at
+    `;
 
       const branchResult = await client.query(branchSql, [
         name,
@@ -341,32 +353,27 @@ class AdminBranchesModel {
       );
       const products = productsResult.rows;
 
-      if (products.length > 0) {
-        for (const product of products) {
-          const availabilitySql = `
-            INSERT INTO branch_product_availability (branch_id, product_id, is_available)
-            VALUES ($1, $2, TRUE)
-            ON CONFLICT (branch_id, product_id) DO NOTHING
-          `;
-          await client.query(availabilitySql, [
-            newBranchId,
-            product.product_id,
-          ]);
+      for (const product of products) {
+        await client.query(
+          `INSERT INTO branch_product_availability (branch_id, product_id, is_available)
+         VALUES ($1, $2, TRUE)
+         ON CONFLICT (branch_id, product_id) DO NOTHING`,
+          [newBranchId, product.product_id],
+        );
 
-          const menuSql = `
-            INSERT INTO branch_menu (branch_id, product_id, price_override, is_visible)
-            VALUES ($1, $2, NULL, TRUE)
-            ON CONFLICT (branch_id, product_id) DO NOTHING
-          `;
-          await client.query(menuSql, [newBranchId, product.product_id]);
-        }
+        await client.query(
+          `INSERT INTO branch_menu (branch_id, product_id, price_override, is_visible)
+         VALUES ($1, $2, NULL, TRUE)
+         ON CONFLICT (branch_id, product_id) DO NOTHING`,
+          [newBranchId, product.product_id],
+        );
       }
 
       await client.query("COMMIT");
       return newBranch;
-    } catch (transactionError) {
+    } catch (error) {
       await client.query("ROLLBACK");
-      throw transactionError;
+      throw error;
     } finally {
       client.release();
     }

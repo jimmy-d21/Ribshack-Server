@@ -22,6 +22,7 @@ export const productSchema = z.object({
     .array(
       z.object({
         name: z.string().min(1, "Add-on name cannot be empty"),
+        type: z.string().min(1, "Add-on type cannot be empty"),
         price: z.number().positive("Add-on price must be greater than zero"),
       }),
     )

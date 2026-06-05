@@ -20,6 +20,7 @@ export const getBranchAnalytics = asyncHandler(async (req, res) => {
 
 export const createBranch = asyncHandler(async (req, res) => {
   const branch = await service.createBranch(req.body);
+
   return res
     .status(201)
     .json({ success: true, message: "Branch created successfully", branch });

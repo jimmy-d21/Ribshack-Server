@@ -89,9 +89,9 @@ class AdminProductModel {
     await client.query(sql, [productId, imageUrl]);
   }
 
-  async createAddOns(client, productId, addonName, additionalPrice) {
-    const sql = `INSERT INTO product_addons (product_id, addon_name, additional_price) VALUES ($1, $2, $3)`;
-    await client.query(sql, [productId, addonName, additionalPrice]);
+  async createAddOns(client, productId, addonName, addonType, additionalPrice) {
+    const sql = `INSERT INTO product_addons (product_id, addon_name, addon_type, additional_price) VALUES ($1, $2, $3, $4)`;
+    await client.query(sql, [productId, addonName, addonType, additionalPrice]);
   }
 
   async findById(client = db, productId) {
@@ -101,17 +101,29 @@ class AdminProductModel {
         p.product_name AS name,
         pc.category_name AS category,
         p.category_id AS category_id,
-        p.base_price AS price,
+        p.base_price::float AS price,
         p.description,
         p.has_unli_rice AS "unliRice",
         p.is_active AS available,
         pi.image_url AS image,
+
+        (p.product_id IN (
+        SELECT oi_sub.product_id
+        FROM order_items oi_sub
+        JOIN orders o_sub ON o_sub.order_id = oi_sub.order_id
+        WHERE o_sub.order_status != 'CANCELLED'
+        GROUP BY oi_sub.product_id
+        ORDER BY SUM(oi_sub.quantity) DESC
+        LIMIT 5
+        )) AS "isBestseller",
+         
         (
           SELECT COALESCE(
             JSON_AGG(
               JSON_BUILD_OBJECT(
                 'id', pa.addon_id,
                 'name', pa.addon_name,
+                'type', pa.addon_type,
                 'price', pa.additional_price
               )
             ),

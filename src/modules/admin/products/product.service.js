@@ -76,7 +76,13 @@ export const createProduct = async (productData) => {
 
     if (Array.isArray(addOns)) {
       for (const addon of addOns) {
-        await model.createAddOns(client, productId, addon.name, addon.price);
+        await model.createAddOns(
+          client,
+          productId,
+          addon.name,
+          addon.type,
+          addon.price,
+        );
       }
     }
 
@@ -151,7 +157,13 @@ export const updateProduct = async (productId, productData) => {
     await model.deleteAllAddOns(client, productId);
     if (Array.isArray(addOns)) {
       for (const addon of addOns) {
-        await model.createAddOns(client, productId, addon.name, addon.price);
+        await model.createAddOns(
+          client,
+          productId,
+          addon.name,
+          addon.type,
+          addon.price,
+        );
       }
     }
 

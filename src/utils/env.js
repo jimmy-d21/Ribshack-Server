@@ -20,6 +20,11 @@ const ENV = Object.freeze({
     api_key: process.env.CLOUDINARY_API_KEY,
     secret_key: process.env.CLOUDINARY_SECRECT_KEY,
   },
+  url: [
+    process.env.ADMIN_URL,
+    process.env.STORE_URL,
+    process.env.APPLICATION_URL,
+  ].filter(Boolean),
 });
 
 export default ENV;

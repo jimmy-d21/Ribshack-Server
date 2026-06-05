@@ -7,12 +7,15 @@ import storeRoutes from "./routes/store.route.js";
 import appRoutes from "./routes/app.route.js";
 
 import { errorHandler, notFound } from "./middlewares/error.middleware.js";
+import ENV from "./utils/ENV.js";
 
 const app = express();
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: ENV.url.length
+      ? ENV.url
+      : ["http://localhost:5173", "http://localhost:5174"],
     credentials: true,
   }),
 );

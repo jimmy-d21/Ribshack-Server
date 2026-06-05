@@ -54,8 +54,10 @@ const updateRequestStatus = async (requestId, remarks, adminId, status) => {
     await model.createStatusLogs(client, requestId, status, adminId, remarks);
     const result = await model.updateStatus(client, requestId, status);
 
+    const updatedRequest = await model.findById(requestId, client);
+
     await client.query("COMMIT");
-    return result;
+    return updatedRequest;
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
