@@ -11,7 +11,7 @@ class AppOrderModel {
         p.product_name              AS "name",
         p.base_price                AS "productPrice",
         pi.image_url                AS "image",
-        ci.unit_price * ci.quantity AS "price",
+        ci.unit_price::float        AS "price",
         ci.quantity                 AS "quantity",
         (
         SELECT JSON_BUILD_OBJECT(
@@ -133,7 +133,7 @@ class AppOrderModel {
       SELECT
         o.order_id       AS "id",
         o.order_status   AS "status",
-        o.total_amount   AS "totalAmount",
+        o.total_amount::float   AS "totalAmount",
         o.payment_method AS "paymentMethod",
         o.placed_at      AS "placedAt",
         dd.full_address  AS "fullAddress",
@@ -232,7 +232,7 @@ class AppOrderModel {
         order_id       AS "orderId",
         order_number   AS "orderNumber",
         order_status   AS "orderStatus",
-        total_amount   AS "totalAmount",
+        total_amount::float   AS "totalAmount",
         payment_method AS "paymentMethod",
         placed_at      AS "placedAt"
     `;

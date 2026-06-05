@@ -21,6 +21,7 @@ export const createOrder = async (userId, orderData) => {
     const { paymentMethod, branchId, instructions } = orderData;
 
     const carts = await model.findAll(client, userId, branchId);
+
     if (carts.length === 0) throw new AppError("Cart is empty", 400);
 
     const address = await model.findAddressesByUserId(client, userId);
@@ -28,20 +29,18 @@ export const createOrder = async (userId, orderData) => {
       throw new AppError("Please add a delivery address first", 400);
 
     const totalAmount = carts.reduce((sum, item) => {
-      const drinksTotal = item.addons.drinks.reduce(
+      const quantity = Number(item.quantity);
+      const basePrice = Number(item.price);
+
+      const drinksTotal = (item.addons?.drinks || []).reduce(
         (acc, addon) => acc + Number(addon.price),
         0,
       );
-      const extrasTotal = item.addons.extras.reduce(
+      const extrasTotal = (item.addons?.extras || []).reduce(
         (acc, addon) => acc + Number(addon.price),
         0,
       );
-
-      const addonTotal = drinksTotal + extrasTotal;
-      const itemTotal = Number(item.price + addonTotal) * item.quantity;
-
-      console.log(itemTotal);
-
+      const itemTotal = (basePrice + drinksTotal + extrasTotal) * quantity;
       return sum + itemTotal;
     }, 0);
 
@@ -71,9 +70,9 @@ export const createOrder = async (userId, orderData) => {
         (acc, addon) => acc + Number(addon.price),
         0,
       );
-      const addonsTotal = drinksTotal + extrasTotal;
-      const unitPrice = Number(cart.price) / cart.quantity;
-      const subtotal = Number(cart.price) + addonsTotal;
+      const addonsTotal = Number(drinksTotal + extrasTotal) * cart.quantity;
+      const unitPrice = Number(cart.price);
+      const subtotal = Number(cart.price * cart.quantity);
 
       const orderItem = await model.createOrderItem(
         client,

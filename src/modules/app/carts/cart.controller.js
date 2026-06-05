@@ -45,8 +45,9 @@ export const deleteCartItem = asyncHandler(async (req, res) => {
 });
 
 export const deleteAllCartItem = asyncHandler(async (req, res) => {
+  const { branchId } = req.params;
   const userId = req.authUser.id;
-  const deletedItems = await service.deleteAllCartItem(userId);
+  const deletedItems = await service.deleteAllCartItem(userId, branchId);
   return res.status(200).json({
     success: true,
     message: "All cart items cleared successfully",

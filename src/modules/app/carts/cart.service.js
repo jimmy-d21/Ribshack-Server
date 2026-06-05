@@ -85,8 +85,8 @@ export const deleteCartItem = async (itemId) => {
   return model.deleteCartItem(itemId);
 };
 
-export const deleteAllCartItem = async (userId) => {
-  const cart = await model.findCartByUserId(db, userId);
+export const deleteAllCartItem = async (userId, branchId) => {
+  const cart = await model.findCartByUserId(db, userId, branchId);
   if (!cart) return [];
-  return model.deleteAllCartItems(cart.cart_id);
+  return model.deleteAllCartItems(cart.cart_id, branchId);
 };

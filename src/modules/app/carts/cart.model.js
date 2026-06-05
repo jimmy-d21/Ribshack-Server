@@ -195,9 +195,9 @@ class AppCartModel {
     return rows[0];
   }
 
-  async deleteAllCartItems(cartId) {
-    const sql = `DELETE FROM cart_items WHERE cart_id = $1 RETURNING *`;
-    const { rows } = await db.query(sql, [cartId]);
+  async deleteAllCartItems(cartId, branchId) {
+    const sql = `DELETE FROM carts WHERE cart_id = $1 AND branch_id = $2 RETURNING *`;
+    const { rows } = await db.query(sql, [cartId, branchId]);
     return rows;
   }
 }

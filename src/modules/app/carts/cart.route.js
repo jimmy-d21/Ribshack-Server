@@ -9,6 +9,6 @@ router.get("/:branchId", controller.getAllCarts);
 router.post("/items", validate(addToCartSchema), controller.addToCart);
 router.put("/items/:itemId", validate(updateCartSchema), controller.updateCart);
 router.delete("/items/:itemId", controller.deleteCartItem);
-router.delete("/", controller.deleteAllCartItem); // todo
+router.delete("/:branchId", controller.deleteAllCartItem);
 
 export default router;
