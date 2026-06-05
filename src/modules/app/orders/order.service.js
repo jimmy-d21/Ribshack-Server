@@ -36,7 +36,13 @@ export const createOrder = async (userId, orderData) => {
         (acc, addon) => acc + Number(addon.price),
         0,
       );
-      return sum + Number(item.price) + drinksTotal + extrasTotal;
+
+      const addonTotal = drinksTotal + extrasTotal;
+      const itemTotal = Number(item.price + addonTotal) * item.quantity;
+
+      console.log(itemTotal);
+
+      return sum + itemTotal;
     }, 0);
 
     let orderNumber;

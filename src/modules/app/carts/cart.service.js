@@ -50,15 +50,12 @@ export const updateCart = async (itemId, cartData) => {
   try {
     await client.query("BEGIN");
 
-    const { quantity, price, addOns = [] } = cartData;
+    const { quantity, addOns = [] } = cartData;
 
     const cartItem = await model.findCartItem(client, itemId);
     if (!cartItem) throw new AppError("Cart item not found", 404);
 
-    await model.updateCartItem(client, itemId, {
-      quantity,
-      unitPrice: price,
-    });
+    const result = await model.updateCartItem(client, itemId, quantity);
 
     await model.deleteAllAddons(client, itemId);
     for (const addOn of addOns) {
@@ -72,6 +69,7 @@ export const updateCart = async (itemId, cartData) => {
     await client.query("COMMIT");
 
     const updatedCartItem = await model.findCartItem(client, itemId);
+
     return updatedCartItem;
   } catch (error) {
     await client.query("ROLLBACK");

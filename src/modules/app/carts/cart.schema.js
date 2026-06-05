@@ -28,8 +28,5 @@ export const updateCartSchema = z.object({
   quantity: z
     .number({ required_error: "Quantity is required" })
     .positive("Invalid quantity"),
-  price: z
-    .number({ required_error: "Price is required" })
-    .positive("Invalid price"),
   addOns: z.array(addOnSchema).optional(),
 });
