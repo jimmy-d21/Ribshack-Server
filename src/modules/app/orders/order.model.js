@@ -223,11 +223,12 @@ class AppOrderModel {
     totalAmount,
     paymentMethod,
     order_number,
+    orderType,
   ) {
     const sql = `
       INSERT INTO orders
-        (customer_id, branch_id, total_amount, payment_method, order_number)
-      VALUES ($1, $2, $3, $4, $5)
+        (customer_id, branch_id, total_amount, payment_method, order_number, order_type)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING
         order_id       AS "orderId",
         order_number   AS "orderNumber",
@@ -242,6 +243,7 @@ class AppOrderModel {
       totalAmount,
       paymentMethod,
       order_number,
+      orderType,
     ]);
     return rows[0];
   }

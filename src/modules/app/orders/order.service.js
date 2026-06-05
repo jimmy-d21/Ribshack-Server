@@ -52,6 +52,8 @@ export const createOrder = async (userId, orderData) => {
       isDuplicate = await model.orderNumberExists(client, orderNumber);
     }
 
+    const orderType = "DELIVERY";
+
     const newOrder = await model.createOrder(
       client,
       userId,
@@ -59,6 +61,7 @@ export const createOrder = async (userId, orderData) => {
       totalAmount,
       paymentMethod,
       orderNumber,
+      orderType,
     );
 
     for (const cart of carts) {
