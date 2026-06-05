@@ -5,6 +5,7 @@ class StoreKitchenModel {
     const sql = `
       SELECT
         o.order_id                       AS id,
+        o.order_number                   AS "orderNumber",
         u.full_name                      AS "customerName",
         o.order_status                   AS status,
         oin.instruction_text             AS "specialInstructions",
@@ -52,6 +53,7 @@ class StoreKitchenModel {
     const sql = `
         SELECT
             o.order_id           AS id,
+            o.order_number       AS "orderNumber",
             u.full_name          AS "customerName",
             u.contact_number     AS "contactNumber",
             o.order_status       AS status,

@@ -60,6 +60,7 @@ class AppOrderModel {
     const sql = `
       SELECT
         o.order_id       AS "id",
+        o.order_number   AS "orderNumber",
         o.order_status   AS "status",
         o.total_amount   AS "totalAmount",
         o.payment_method AS "paymentMethod",
@@ -132,6 +133,7 @@ class AppOrderModel {
     const sql = `
       SELECT
         o.order_id       AS "id",
+        o.order_number   AS "orderNumber",
         o.order_status   AS "status",
         o.total_amount::float   AS "totalAmount",
         o.payment_method AS "paymentMethod",
