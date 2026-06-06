@@ -70,7 +70,7 @@ class StoreDashboardModel {
             TO_CHAR(series_hour, 'FMHH12:MI AM') AS "hour",
             COALESCE(SUM(o.total_amount), 0)::float AS "revenue"
             FROM GENERATE_SERIES(
-            CURRENT_DATE + INTERVAL '8 hours',  
+            CURRENT_DATE + INTERVAL '10 hours',  
             CURRENT_DATE + INTERVAL '21 hours', 
             INTERVAL '1 hour'
             ) AS series_hour

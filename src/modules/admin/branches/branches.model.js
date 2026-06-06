@@ -45,14 +45,13 @@ class AdminBranchesModel {
         b.branch_name AS name,
         b.full_address AS location,
         b.city,
-        br.region_id,
+        br.region_id   AS regionId,
         br.region_name AS region,
         b.manager_name AS manager,
         b.contact_number AS phone,
-        b.password_hash AS password,
         b.username,
         b.is_open AS status,
-        b.created_at
+        b.created_at AS createdAt
       FROM branches b
       JOIN branches_regions br ON b.region_id = br.region_id
       WHERE b.branch_id = $1
@@ -194,18 +193,20 @@ class AdminBranchesModel {
         SELECT
           b.branch_name AS branchName,
 
-          -- TODAY ORDER STATUS METRICS
+         -- TODAY ORDER STATUS METRICS
           (
             SELECT JSON_BUILD_OBJECT(
-              'revenue', COALESCE(SUM(total_amount), 0),
-              'orders', COUNT(order_id),
-              'avgOrderValue', COALESCE(ROUND(AVG(total_amount), 2), 0),
-              'customer', COUNT(DISTINCT customer_id)
+              'revenue', COALESCE(SUM(CASE WHEN placed_at::date = CURRENT_DATE THEN total_amount ELSE 0 END), 0),
+              'orders', COUNT(CASE WHEN placed_at::date = CURRENT_DATE THEN 1 END),
+              'avgOrderValue', COALESCE(ROUND(AVG(CASE WHEN placed_at::date = CURRENT_DATE THEN total_amount END), 2), 0),
+              'customer', COUNT(DISTINCT CASE WHEN placed_at::date = CURRENT_DATE THEN customer_id END),
+              'yesterdayRevenue', COALESCE(SUM(CASE WHEN placed_at::date = CURRENT_DATE - 1 THEN total_amount ELSE 0 END), 0),
+              'yesterdayOrders', COUNT(CASE WHEN placed_at::date = CURRENT_DATE - 1 THEN 1 END)
             )
             FROM orders
             WHERE branch_id = b.branch_id
               AND order_status != 'CANCELLED'
-              AND placed_at::date = CURRENT_DATE
+              AND placed_at::date >= CURRENT_DATE - 1
           ) AS "todayStats",
 
           -- TODAY'S ORDER STATUS METRICS
@@ -242,19 +243,20 @@ class AdminBranchesModel {
           ) AS "weeklyRevenue",
 
           -- TODAY'S HOURLY PEAK BREAKDOWN
-          (
+            (
               SELECT COALESCE(JSON_AGG(hourly_series), '[]'::json)
               FROM (
                 SELECT 
-                  TO_CHAR(h, 'FMPM') AS "hour",
-                  COUNT(o.order_id) AS "orders"
+                  TO_CHAR(h, 'FMHH12AM') AS "hour",
+                  COALESCE(COUNT(o.order_id), 0) AS "orders"
                 FROM GENERATE_SERIES(
-                  (CURRENT_DATE + INTERVAL '10 hours'), -- Starts at 10:00 AM
-                  (CURRENT_DATE + INTERVAL '21 hours'), -- Ends at 9:00 PM
+                  (CURRENT_DATE + INTERVAL '10 hours'),
+                  (CURRENT_DATE + INTERVAL '21 hours'),
                   INTERVAL '1 hour'
                 ) AS h
                 LEFT JOIN orders o ON DATE_TRUNC('hour', o.placed_at) = h 
                                   AND o.branch_id = b.branch_id
+                                  AND o.order_status != 'CANCELLED'
                 GROUP BY h
                 ORDER BY h ASC
               ) hourly_series
@@ -285,7 +287,7 @@ class AdminBranchesModel {
               SELECT COALESCE(JSON_AGG(recent_series), '[]'::json)
               FROM (
                 SELECT 
-                  '#ORD-' || o.order_id AS "id",
+                  o.order_number AS "orderNumber",
                   TO_CHAR(o.placed_at, 'FMHH:MI AM') AS "time",
                   (SELECT COALESCE(SUM(quantity), 0)::int FROM order_items WHERE order_id = o.order_id) AS "items",
                   o.total_amount AS "total",
