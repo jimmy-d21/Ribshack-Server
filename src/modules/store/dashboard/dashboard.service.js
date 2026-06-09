@@ -1,12 +1,13 @@
 import { storeDashboardModel as model } from "./dashboard.model.js";
 
 export const getKPIS = async (branchId) => {
-  const raw = await model.kpis(branchId);
+  const kpis = await model.kpis(branchId);
 
   return {
-    grossRevenue: parseFloat(raw.grossRevenue),
-    totalOrders: parseInt(raw.totalOrders),
-    avgOrderValue: parseFloat(raw.avgOrderValue),
+    grossRevenue: parseFloat(kpis.grossRevenue || 0),
+    totalOrders: parseInt(kpis.totalOrders || 0),
+    avgOrderValue: parseFloat(kpis.avgOrderValue || 0),
+    trends: kpis.trends || { revenue: "+0%", orders: "+0%" },
   };
 };
 
