@@ -35,7 +35,7 @@ export const getOrderDetails = async (orderId, branchId) => {
   };
 };
 
-export const updateOrderStatus = async (orderId, branchId) => {
+export const updateOrderStatus = async (orderId, branchId, io) => {
   const ORDER_STATUSES = [
     "PLACED",
     "PREPARING",
@@ -61,6 +61,27 @@ export const updateOrderStatus = async (orderId, branchId) => {
   await model.updateOrderById(orderId, branchId, nextStatus);
 
   await model.createStatusLog(orderId, nextStatus);
+
+  if (nextStatus === "OUT_FOR_DELIVERY") {
+    const title = "Your order is on the way!";
+    const message = `Order #${order.orderNumber} is currently out for delivery.`;
+    const type = "ORDER_DISPATCHED";
+
+    const rawNotif = await model.createNotification(
+      order.customerId,
+      orderId,
+      title,
+      message,
+      type,
+    );
+
+    const newNotification = { ...rawNotif, actionUrl: `/order` };
+
+    io.to(`user:${order.customerId}`).emit(
+      "user:notification",
+      newNotification,
+    );
+  }
 
   const updatedOrder = await model.findOrderById(orderId, branchId);
   return updatedOrder;

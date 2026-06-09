@@ -104,7 +104,7 @@ export const createOrder = asyncHandler(async (req, res) => {
   });
 
   io.to(`branch:${req.body.branchId}`).emit(
-    "order:notification",
+    "branch:notification",
     newNotifications,
   );
 

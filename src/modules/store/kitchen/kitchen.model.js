@@ -246,6 +246,23 @@ class StoreKitchenModel {
     const { rows } = await db.query(sql, [orderId, status]);
     return rows[0];
   }
+
+  async createNotification(userId, orderId, title, message, type) {
+    const sql = `INSERT INTO app_notifications
+                 (customer_id, order_id, title, message, notification_type)
+                 VALUES($1, $2, $3, $4, $5)
+                 RETURNING
+                    notification_id AS "id",
+                    notification_type AS "type",
+                    title,
+                    message,
+                    is_read AS "isread",
+                    created_at AS "createdat"
+                    `;
+    const values = [userId, orderId, title, message, type];
+    const { rows } = await db.query(sql, values);
+    return rows[0];
+  }
 }
 
 export const storeKitchenModel = new StoreKitchenModel();
