@@ -103,11 +103,11 @@ export const getProductBestSeller = async () => {
   const rows = await model.getProductBestSeller();
 
   return rows.map((r) => ({
-    id: parseInt(r.id),
+    id: Number(r.id),
     name: r.name,
     category: r.category,
-    sold: parseInt(r.sold),
-    revenue: parseFloat(r.revenue),
+    sold: Number(r.sold ?? 0),
+    revenue: Number(r.revenue ?? 0),
     growth: formatTrend(r.growth),
     popularIn: r.popular_in ?? [],
   }));

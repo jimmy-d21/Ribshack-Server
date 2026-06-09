@@ -3,8 +3,17 @@
 // ============================================================
 
 export const formatTrend = (value) => {
-  if (value === 0) return "0%";
-  return value > 0 ? `+${value}%` : `${value}%`;
+  if (value === null || value === undefined) {
+    return "New";
+  }
+
+  const growth = Number(value);
+
+  if (growth === 0) {
+    return "0%";
+  }
+
+  return growth > 0 ? `+${growth.toFixed(2)}%` : `${growth.toFixed(2)}%`;
 };
 
 // ============================================================
