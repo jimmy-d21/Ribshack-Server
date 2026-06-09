@@ -3,8 +3,8 @@
 // ============================================================
 
 export const formatTrend = (value) => {
-  const num = parseFloat(value ?? 0);
-  return num > 0 ? `+${num}%` : `${num}%`;
+  if (value === 0) return "0%";
+  return value > 0 ? `+${value}%` : `${value}%`;
 };
 
 // ============================================================

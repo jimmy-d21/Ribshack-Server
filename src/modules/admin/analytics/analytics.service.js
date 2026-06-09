@@ -43,16 +43,20 @@ export const getRegionalRevenue = async () => {
 export const getTopBranches = async () => {
   const rows = await model.getTopBranches();
 
-  return rows.map((r, index) => ({
-    id: parseInt(r.id),
-    name: r.name,
-    location: r.location,
-    region: r.region,
-    revenue: parseFloat(r.revenue),
-    orders: parseInt(r.orders),
-    growth: formatTrend(r.growth),
-    note: index === 0 ? "Top Performer" : null,
-  }));
+  return rows.map((r, index) => {
+    const growthVal = parseFloat(r.growth ?? 0);
+
+    return {
+      id: parseInt(r.id),
+      name: r.name,
+      location: r.location,
+      region: r.region,
+      revenue: parseFloat(r.revenue ?? 0),
+      orders: parseInt(r.orders ?? 0),
+      growth: formatTrend(growthVal),
+      note: index === 0 ? "Top Performer" : null,
+    };
+  });
 };
 
 export const getSalesByCategory = async () => {
