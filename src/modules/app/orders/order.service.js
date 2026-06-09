@@ -134,7 +134,6 @@ export const createOrder = async (userId, orderData) => {
     await client.query("COMMIT");
 
     const order = await model.findOrderById(newOrder.orderId, userId);
-    console.log("NewOrder", order);
 
     return order;
   } catch (error) {

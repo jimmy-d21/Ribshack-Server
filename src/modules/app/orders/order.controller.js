@@ -53,7 +53,7 @@ async function broadcastStoreDashboard(io, branchId) {
       storeService.getBestSeller(branchId),
     ]);
 
-    io.emit("storeDashboard:update", {
+    io.to(`branch:${branchId}`).emit("storeDashboard:update", {
       kpis,
       weeklyRevenue,
       hourlyRevenue,
@@ -87,7 +87,7 @@ export const createOrder = asyncHandler(async (req, res) => {
 
   broadcastStoreDashboard(io, req.body.branchId);
 
-  io.emit("order:created", {
+  io.to(`branch:${req.body.branchId}`).emit("order:created", {
     id: newOrder.id,
     orderNumber: newOrder.orderNumber,
     customerName: newOrder.customerName,
