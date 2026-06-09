@@ -5,10 +5,14 @@ export const getOrders = async (branchId) => {
 
   return rows.map((r) => ({
     id: r.id,
+    orderNumber: r.orderNumber,
     customerName: r.customerName,
     status: r.status,
     specialInstructions: r.specialInstructions ?? null,
     totalAmount: parseFloat(r.totalAmount),
+    paymentMethod: r.paymentMethod,
+    placedAt: r.placedAt,
+    fullAddress: r.fullAddress,
     items: r.items ?? [],
   }));
 };

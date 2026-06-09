@@ -30,7 +30,7 @@ export const createOrder = async (userId, orderData) => {
 
     const totalAmount = carts.reduce((sum, item) => {
       const quantity = Number(item.quantity);
-      const basePrice = Number(item.price);
+      const basePrice = Number(item.unitPrice);
 
       const drinksTotal = (item.addons?.drinks || []).reduce(
         (acc, addon) => acc + Number(addon.price),
@@ -132,7 +132,11 @@ export const createOrder = async (userId, orderData) => {
     await model.createNotification(client, branchId, title, message, type);
 
     await client.query("COMMIT");
-    return newOrder;
+
+    const order = await model.findOrderById(newOrder.orderId, userId);
+    console.log("NewOrder", order);
+
+    return order;
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;

@@ -87,6 +87,19 @@ export const createOrder = asyncHandler(async (req, res) => {
 
   broadcastStoreDashboard(io, req.body.branchId);
 
+  io.emit("order:created", {
+    id: newOrder.id,
+    orderNumber: newOrder.orderNumber,
+    customerName: newOrder.customerName,
+    status: newOrder.status,
+    specialInstructions: newOrder.specialInstructions ?? null,
+    totalAmount: parseFloat(newOrder.totalAmount),
+    paymentMethod: newOrder.paymentMethod,
+    placedAt: newOrder.placedAt,
+    fullAddress: newOrder.fullAddress,
+    items: newOrder.items ?? [],
+  });
+
   return res
     .status(201)
     .json({ success: true, message: "Order placed! Salamat!", newOrder });

@@ -3,17 +3,22 @@ import db from "../../../config/db.js";
 class AppOrderModel {
   async findAll(client = db, userId, branchId) {
     const sql = `
-      SELECT
-        c.cart_id                   AS "id",
-        c.created_at                AS "createdAt",
-        ci.cart_item_id             AS "cartItemId",
-        p.product_id                AS "productId",
-        p.product_name              AS "name",
-        p.base_price                AS "productPrice",
-        pi.image_url                AS "image",
-        ci.unit_price::float        AS "price",
-        ci.quantity                 AS "quantity",
-        (
+    SELECT
+      c.cart_id                   AS "id",
+      c.created_at                AS "createdAt",
+      ci.cart_item_id             AS "orderItemId",
+      p.product_id                AS "productId",
+      p.product_name              AS "name",
+      pi.image_url                AS "image",
+      ci.quantity                 AS "quantity",
+      ci.unit_price::float        AS "unitPrice",
+      (ci.unit_price * ci.quantity)::float AS "subtotal",
+      (
+        SELECT COALESCE(SUM(cia.addon_price * ci.quantity), 0)::float
+        FROM cart_item_addons cia
+        WHERE cia.cart_item_id = ci.cart_item_id
+      )                           AS "addonsTotal",
+      (
         SELECT JSON_BUILD_OBJECT(
           'drinks', (
             SELECT COALESCE(JSON_AGG(
@@ -42,83 +47,83 @@ class AppOrderModel {
               AND pa.addon_type = 'extra'
           )
         )
-      ) AS "addons"
-      FROM carts c
-      JOIN cart_items ci  ON c.cart_id     = ci.cart_id
-      JOIN products p     ON ci.product_id = p.product_id
-      JOIN product_images pi
-        ON p.product_id  = pi.product_id
-       AND pi.is_primary = TRUE
-      WHERE c.customer_id = $1 AND c.branch_id = $2
-      ORDER BY ci.created_at DESC
-    `;
+      )                           AS "addons"
+    FROM carts c
+    JOIN cart_items ci  ON c.cart_id     = ci.cart_id
+    JOIN products p     ON ci.product_id = p.product_id
+    JOIN product_images pi
+      ON p.product_id  = pi.product_id
+     AND pi.is_primary = TRUE
+    WHERE c.customer_id = $1 AND c.branch_id = $2
+    ORDER BY ci.created_at DESC
+  `;
     const { rows } = await client.query(sql, [userId, branchId]);
     return rows;
   }
 
   async findAllOrders(userId) {
     const sql = `
-      SELECT
-        o.order_id       AS "id",
-        o.order_number   AS "orderNumber",
-        o.order_status   AS "status",
-        o.total_amount   AS "totalAmount",
-        o.payment_method AS "paymentMethod",
-        o.placed_at      AS "placedAt",
-        (
-          SELECT COALESCE(JSON_AGG(
-            JSON_BUILD_OBJECT(
-              'orderItemId', oi.order_item_id,
-              'productId',   oi.product_id,
-              'name',        p.product_name,
-              'image',       pi.image_url,
-              'quantity',    oi.quantity,
-              'unitPrice',   oi.unit_price,
-              'addonsTotal', oi.addons_total,
-              'subtotal',    oi.subtotal,
-              'addons', (
-                SELECT JSON_BUILD_OBJECT(
-                  'drinks', (
-                    SELECT COALESCE(JSON_AGG(
-                      JSON_BUILD_OBJECT(
-                        'id',    oia.order_addon_id,
-                        'name',  oia.addon_name,
-                        'price', oia.addon_price
-                      )
-                    ), '[]'::json)
-                    FROM order_item_addons oia
-                    JOIN product_addons pa ON oia.addon_id = pa.addon_id
-                    WHERE oia.order_item_id = oi.order_item_id
-                      AND pa.addon_type = 'drink'
-                  ),
-                  'extras', (
-                    SELECT COALESCE(JSON_AGG(
-                      JSON_BUILD_OBJECT(
-                        'id',    oia.order_addon_id,
-                        'name',  oia.addon_name,
-                        'price', oia.addon_price
-                      )
-                    ), '[]'::json)
-                    FROM order_item_addons oia
-                    JOIN product_addons pa ON oia.addon_id = pa.addon_id
-                    WHERE oia.order_item_id = oi.order_item_id
-                      AND pa.addon_type = 'extra'
+    SELECT
+      o.order_id                     AS "id",
+      o.order_number                 AS "orderNumber",
+      o.order_status                 AS "status",
+      o.total_amount::float          AS "totalAmount",
+      o.payment_method               AS "paymentMethod",
+      o.placed_at                    AS "placedAt",
+
+      COALESCE((
+        SELECT JSON_AGG(
+          JSON_BUILD_OBJECT(
+            'orderItemId', oi.order_item_id,
+            'productId',   oi.product_id,
+            'name',        p.product_name,
+            'image',       pi.image_url,
+            'quantity',    oi.quantity,
+            'unitPrice',   oi.unit_price::float,
+            'addonsTotal', oi.addons_total::float,
+            'subtotal',    oi.subtotal::float,
+            'addons', JSON_BUILD_OBJECT(
+              'drinks', COALESCE((
+                SELECT JSON_AGG(
+                  JSON_BUILD_OBJECT(
+                    'id',    oia.order_addon_id,
+                    'name',  oia.addon_name,
+                    'price', oia.addon_price::float
                   )
                 )
-              )
+                FROM order_item_addons oia
+                JOIN product_addons pa ON oia.addon_id = pa.addon_id
+                WHERE oia.order_item_id = oi.order_item_id
+                  AND pa.addon_type = 'drink'
+              ), '[]'::json),
+              'extras', COALESCE((
+                SELECT JSON_AGG(
+                  JSON_BUILD_OBJECT(
+                    'id',    oia.order_addon_id,
+                    'name',  oia.addon_name,
+                    'price', oia.addon_price::float
+                  )
+                )
+                FROM order_item_addons oia
+                JOIN product_addons pa ON oia.addon_id = pa.addon_id
+                WHERE oia.order_item_id = oi.order_item_id
+                  AND pa.addon_type = 'extra'
+              ), '[]'::json)
             )
-          ), '[]'::json)
-          FROM order_items oi
-          JOIN products p ON oi.product_id = p.product_id
-          JOIN product_images pi
-            ON p.product_id  = pi.product_id
-           AND pi.is_primary = TRUE
-          WHERE oi.order_id = o.order_id
-        )                AS "items"
-      FROM orders o
-      WHERE o.customer_id = $1
-      ORDER BY o.placed_at DESC
-    `;
+          ) ORDER BY oi.created_at DESC
+        )
+        FROM order_items oi
+        JOIN products p ON p.product_id = oi.product_id
+        JOIN product_images pi
+          ON pi.product_id = p.product_id
+         AND pi.is_primary = TRUE
+        WHERE oi.order_id = o.order_id
+      ), '[]'::json)                 AS "items"
+
+    FROM orders o
+    WHERE o.customer_id = $1
+    ORDER BY o.placed_at DESC
+  `;
     const { rows } = await db.query(sql, [userId]);
     return rows;
   }
@@ -131,69 +136,73 @@ class AppOrderModel {
 
   async findOrderById(orderId, userId) {
     const sql = `
-      SELECT
-        o.order_id       AS "id",
-        o.order_number   AS "orderNumber",
-        o.order_status   AS "status",
-        o.total_amount::float   AS "totalAmount",
-        o.payment_method AS "paymentMethod",
-        o.placed_at      AS "placedAt",
-        dd.full_address  AS "fullAddress",
-        (
-          SELECT COALESCE(JSON_AGG(
-            JSON_BUILD_OBJECT(
-              'orderItemId', oi.order_item_id,
-              'productId',   oi.product_id,
-              'name',        p.product_name,
-              'image',       pi.image_url,
-              'quantity',    oi.quantity,
-              'unitPrice',   oi.unit_price,
-              'addonsTotal', oi.addons_total,
-              'subtotal',    oi.subtotal,
-              'addons', (
-                SELECT JSON_BUILD_OBJECT(
-                  'drinks', (
-                    SELECT COALESCE(JSON_AGG(
-                      JSON_BUILD_OBJECT(
-                        'id',    oia.order_addon_id,
-                        'name',  oia.addon_name,
-                        'price', oia.addon_price
-                      )
-                    ), '[]'::json)
-                    FROM order_item_addons oia
-                    JOIN product_addons pa ON oia.addon_id = pa.addon_id
-                    WHERE oia.order_item_id = oi.order_item_id
-                      AND pa.addon_type = 'drink'
-                  ),
-                  'extras', (
-                    SELECT COALESCE(JSON_AGG(
-                      JSON_BUILD_OBJECT(
-                        'id',    oia.order_addon_id,
-                        'name',  oia.addon_name,
-                        'price', oia.addon_price
-                      )
-                    ), '[]'::json)
-                    FROM order_item_addons oia
-                    JOIN product_addons pa ON oia.addon_id = pa.addon_id
-                    WHERE oia.order_item_id = oi.order_item_id
-                      AND pa.addon_type = 'extra'
+    SELECT
+      o.order_id                     AS "id",
+      o.order_number                 AS "orderNumber",
+      u.full_name                    AS "customerName",
+      o.order_status                 AS "status",
+      oin.instruction_text           AS "specialInstructions",
+      o.total_amount::float          AS "totalAmount",
+      o.payment_method               AS "paymentMethod",
+      o.placed_at                    AS "placedAt",
+      dd.full_address                AS "fullAddress",
+
+      COALESCE((
+        SELECT JSON_AGG(
+          JSON_BUILD_OBJECT(
+            'orderItemId', oi.order_item_id,
+            'productId',   oi.product_id,
+            'name',        p.product_name,
+            'image',       pi.image_url,
+            'quantity',    oi.quantity,
+            'unitPrice',   oi.unit_price,
+            'addonsTotal', oi.addons_total,
+            'subtotal',    oi.subtotal,
+            'addons', JSON_BUILD_OBJECT(
+              'drinks', COALESCE((
+                SELECT JSON_AGG(
+                  JSON_BUILD_OBJECT(
+                    'id',    oia.order_addon_id,
+                    'name',  oia.addon_name,
+                    'price', oia.addon_price
                   )
                 )
-              )
+                FROM order_item_addons oia
+                JOIN product_addons pa ON oia.addon_id = pa.addon_id
+                WHERE oia.order_item_id = oi.order_item_id
+                  AND pa.addon_type = 'drink'
+              ), '[]'::json),
+              'extras', COALESCE((
+                SELECT JSON_AGG(
+                  JSON_BUILD_OBJECT(
+                    'id',    oia.order_addon_id,
+                    'name',  oia.addon_name,
+                    'price', oia.addon_price
+                  )
+                )
+                FROM order_item_addons oia
+                JOIN product_addons pa ON oia.addon_id = pa.addon_id
+                WHERE oia.order_item_id = oi.order_item_id
+                  AND pa.addon_type = 'extra'
+              ), '[]'::json)
             )
-          ), '[]'::json)
-          FROM order_items oi
-          JOIN products p ON oi.product_id = p.product_id
-          JOIN product_images pi
-            ON p.product_id  = pi.product_id
-           AND pi.is_primary = TRUE
-          WHERE oi.order_id = o.order_id
-        )                AS "items"
-      FROM orders o
-      JOIN delivery_details dd ON o.order_id = dd.order_id
-      WHERE o.customer_id = $1
-        AND o.order_id    = $2
-    `;
+          ) ORDER BY oi.created_at DESC
+        )
+        FROM order_items oi
+        JOIN products p ON p.product_id = oi.product_id
+        JOIN product_images pi
+          ON pi.product_id = p.product_id
+         AND pi.is_primary = TRUE
+        WHERE oi.order_id = o.order_id
+      ), '[]'::json)                 AS "items"
+
+    FROM orders o
+    JOIN users u                       ON u.user_id   = o.customer_id
+    JOIN delivery_details dd           ON dd.order_id = o.order_id
+    LEFT JOIN order_instructions oin   ON oin.order_id = o.order_id
+    WHERE o.customer_id = $1
+      AND o.order_id    = $2
+  `;
     const { rows } = await db.query(sql, [userId, orderId]);
     return rows[0] ?? null;
   }
