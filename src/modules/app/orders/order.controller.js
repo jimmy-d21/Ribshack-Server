@@ -2,6 +2,7 @@ import asyncHandler from "../../../utils/asyncHandler.js";
 import * as service from "./order.service.js";
 import * as adminService from "../../admin/analytics/analytics.service.js";
 import * as storeService from "../../store/dashboard/dashboard.service.js";
+import * as storeBranchService from "../../admin/branches/branches.service.js";
 
 async function broadcastAdminAnalytics(io) {
   try {
@@ -65,6 +66,16 @@ async function broadcastStoreDashboard(io, branchId) {
   }
 }
 
+async function broadcastAdminBranchDetails(io, branchId) {
+  try {
+    const analytics = await storeBranchService.getBranchAnalytics(branchId);
+    const roomId = `branch:${branchId}`;
+    io.to(roomId).emit("adminBranchDetails:update", analytics);
+  } catch (err) {
+    console.error("Failed to broadcast admin branch details:", err.message);
+  }
+}
+
 export const getAllOrders = asyncHandler(async (req, res) => {
   const userId = req.authUser.id;
   const orders = await service.getAllOrders(userId);
@@ -87,8 +98,8 @@ export const createOrder = asyncHandler(async (req, res) => {
   );
 
   broadcastAdminAnalytics(io);
-
   broadcastStoreDashboard(io, req.body.branchId);
+  broadcastAdminBranchDetails(io, req.body.branchId);
 
   io.to(`branch:${req.body.branchId}`).emit("order:created", {
     id: newOrder.id,
