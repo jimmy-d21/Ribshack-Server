@@ -81,7 +81,10 @@ export const getOrderDetails = asyncHandler(async (req, res) => {
 export const createOrder = asyncHandler(async (req, res) => {
   const io = req.app.get("io");
   const userId = req.authUser.id;
-  const newOrder = await service.createOrder(userId, req.body);
+  const { newOrder, newNotifications } = await service.createOrder(
+    userId,
+    req.body,
+  );
 
   broadcastAdminAnalytics(io);
 
@@ -99,6 +102,11 @@ export const createOrder = asyncHandler(async (req, res) => {
     fullAddress: newOrder.fullAddress,
     items: newOrder.items ?? [],
   });
+
+  io.to(`branch:${req.body.branchId}`).emit(
+    "order:notification",
+    newNotifications,
+  );
 
   return res
     .status(201)

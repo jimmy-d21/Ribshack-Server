@@ -393,11 +393,20 @@ class AppOrderModel {
 
   async createNotification(client, branchId, title, message, type) {
     const sql = `
-      INSERT INTO store_notifications
-        (branch_id, title, message, notification_type)
-      VALUES ($1, $2, $3, $4)
-    `;
-    await client.query(sql, [branchId, title, message, type]);
+    INSERT INTO store_notifications
+      (branch_id, title, message, notification_type)
+    VALUES ($1, $2, $3, $4)
+    RETURNING
+        notification_id AS "id",
+        notification_type AS "type",
+        title,
+        message,
+        is_read AS "isread",
+        created_at AS "createdat"
+  `;
+    const { rows } = await client.query(sql, [branchId, title, message, type]);
+
+    return rows[0];
   }
 }
 

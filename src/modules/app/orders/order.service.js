@@ -129,13 +129,21 @@ export const createOrder = async (userId, orderData) => {
     const message = `ORD-${newOrder.orderNumber.split("-")[1]} from ${user.full_name}`;
     const type = "NEW_ORDER";
 
-    await model.createNotification(client, branchId, title, message, type);
+    const newNotifications = await model.createNotification(
+      client,
+      branchId,
+      title,
+      message,
+      type,
+    );
 
     await client.query("COMMIT");
 
     const order = await model.findOrderById(newOrder.orderId, userId);
 
-    return order;
+    newNotifications.actionUrl = "/kitchen";
+
+    return { newOrder: order, newNotifications };
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
