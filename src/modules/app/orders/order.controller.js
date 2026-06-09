@@ -1,14 +1,7 @@
 import asyncHandler from "../../../utils/asyncHandler.js";
 import * as service from "./order.service.js";
-import {
-  getKPIS,
-  getRegionalRevenue,
-  getWeeklyRevenue,
-  getSalesByCategory,
-  getMonthlyRevenue,
-  getTopBranches,
-  getProductBestSeller,
-} from "../../admin/analytics/analytics.service.js";
+import * as adminService from "../../admin/analytics/analytics.service.js";
+import * as storeService from "../../store/dashboard/dashboard.service.js";
 
 async function broadcastAdminAnalytics(io) {
   try {
@@ -21,13 +14,13 @@ async function broadcastAdminAnalytics(io) {
       topBranches,
       bestsellers,
     ] = await Promise.all([
-      getKPIS(),
-      getRegionalRevenue(),
-      getWeeklyRevenue(),
-      getSalesByCategory(),
-      getMonthlyRevenue(),
-      getTopBranches(),
-      getProductBestSeller(),
+      adminService.getKPIS(),
+      adminService.getRegionalRevenue(),
+      adminService.getWeeklyRevenue(),
+      adminService.getSalesByCategory(),
+      adminService.getMonthlyRevenue(),
+      adminService.getTopBranches(),
+      adminService.getProductBestSeller(),
     ]);
 
     io.emit("adminAnalytics:update", {
@@ -41,6 +34,34 @@ async function broadcastAdminAnalytics(io) {
     });
   } catch (err) {
     console.error("Failed to broadcast admin analytics:", err.message);
+  }
+}
+
+async function broadcastStoreDashboard(io, branchId) {
+  try {
+    const [
+      kpis,
+      weeklyRevenue,
+      hourlyRevenue,
+      categorySales,
+      bestsellerOfTheDay,
+    ] = await Promise.all([
+      storeService.getKPIS(branchId),
+      storeService.getWeeklyRevenue(branchId),
+      storeService.getHourlyRevenue(branchId),
+      storeService.getCategorySales(branchId),
+      storeService.getBestSeller(branchId),
+    ]);
+
+    io.emit("storeDashboard:update", {
+      kpis,
+      weeklyRevenue,
+      hourlyRevenue,
+      categorySales,
+      bestsellerOfTheDay,
+    });
+  } catch (err) {
+    console.error("Failed to broadcast store dashboard:", err.message);
   }
 }
 
@@ -63,6 +84,8 @@ export const createOrder = asyncHandler(async (req, res) => {
   const newOrder = await service.createOrder(userId, req.body);
 
   broadcastAdminAnalytics(io);
+
+  broadcastStoreDashboard(io, req.body.branchId);
 
   return res
     .status(201)
