@@ -15,8 +15,15 @@ export const getOrderDetails = asyncHandler(async (req, res) => {
 });
 
 export const updateOrderStatus = asyncHandler(async (req, res) => {
+  const io = req.app.get("io");
   const { orderId } = req.params;
   const branchId = req.authUser.id;
   const updatedOrder = await service.updateOrderStatus(orderId, branchId);
+
+  io.to(`user:${updatedOrder.customerId}`).emit(
+    "order:statusChanged",
+    updatedOrder,
+  );
+
   return res.status(200).json({ success: true, updatedOrder });
 });

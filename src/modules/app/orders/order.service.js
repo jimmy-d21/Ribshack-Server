@@ -74,8 +74,8 @@ export const createOrder = async (userId, orderData) => {
         0,
       );
       const addonsTotal = Number(drinksTotal + extrasTotal) * cart.quantity;
-      const unitPrice = Number(cart.price);
-      const subtotal = Number(cart.price * cart.quantity);
+      const unitPrice = Number(cart.unitPrice);
+      const subtotal = Number(cart.unitPrice * cart.quantity);
 
       const orderItem = await model.createOrderItem(
         client,

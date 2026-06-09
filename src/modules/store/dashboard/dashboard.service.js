@@ -33,8 +33,8 @@ export const getCategorySales = async (branchId) => {
 
   return rows.map((r) => ({
     category: r.category,
-    revenue: parseFloat(r.revenue),
-    orders: parseInt(r.orders),
+    revenue: parseInt(r.revenue ?? 0),
+    orders: parseInt(r.orders ?? 0),
   }));
 };
 
