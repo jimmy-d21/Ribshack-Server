@@ -13,6 +13,20 @@ export const getAllInventory = async (branchId) => {
   return model.findAll(branchId);
 };
 
+export const getRequestKPIS = async (branchId) => {
+  await validateBranch(branchId);
+
+  const kpis = await model.getKPIs(branchId);
+
+  return {
+    adequateStock: kpis.adequateStock,
+    lowStock: kpis.lowStock,
+    criticalStock: kpis.criticalStock,
+    pendingRequests: kpis.pendingRequests,
+    pendingItemIds: kpis.pendingItemIds ?? [],
+  };
+};
+
 export const getAllInventoryCritical = async (branchId) => {
   await validateBranch(branchId);
   return model.findAll(branchId, { criticalOnly: true });
@@ -109,10 +123,10 @@ export const inventoryRequest = async (
 
     await validateBranch(branchId);
 
-    const inventoryItem = await model.findById(inventoryId);
-    if (!inventoryItem) throw new AppError("Inventory item not found", 404);
+    const existingItem = await model.findById(inventoryId);
+    if (!existingItem) throw new AppError("Inventory item not found", 404);
 
-    if (branchId.toString() !== inventoryItem.branchId.toString()) {
+    if (branchId.toString() !== existingItem.branchId.toString()) {
       throw new AppError(
         "You are not authorized to request restock for this inventory item",
         403,
@@ -134,8 +148,10 @@ export const inventoryRequest = async (
       notes,
     );
 
+    const inventoryItem = await model.findById(inventoryId);
+
     await client.query("COMMIT");
-    return inventoryRequest;
+    return { inventoryRequest, inventoryItem };
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;

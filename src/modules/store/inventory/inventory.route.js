@@ -9,6 +9,7 @@ import {
 const router = express.Router();
 
 router.get("/", controller.getAllInventory);
+router.get("/kpis", controller.getRequestKPIS);
 router.get("/alerts", controller.getAllInventoryCritical);
 router.get("/:itemId", controller.getInventoryDetails);
 router.post("/", validate(inventoryItemSchema), controller.addInventoryItem);

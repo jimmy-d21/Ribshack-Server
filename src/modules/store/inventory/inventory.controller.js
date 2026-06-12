@@ -17,6 +17,16 @@ export const getAllInventory = asyncHandler(async (req, res) => {
   return res.status(200).json({ success: true, inventory });
 });
 
+export const getRequestKPIS = asyncHandler(async (req, res) => {
+  const branchId = req.authUser.id;
+  const kpis = await service.getRequestKPIS(branchId);
+
+  return res.status(200).json({
+    success: true,
+    kpis,
+  });
+});
+
 export const getAllInventoryCritical = asyncHandler(async (req, res) => {
   const branchId = req.authUser.id;
   const inventory = await service.getAllInventoryCritical(branchId);
@@ -65,7 +75,7 @@ export const inventoryRequest = asyncHandler(async (req, res) => {
   const { quantity, urgency, notes } = req.body;
   const branchId = req.authUser.id;
 
-  const newInventoryRequest = await service.inventoryRequest(
+  const { inventoryRequest, inventoryItem } = await service.inventoryRequest(
     itemId,
     branchId,
     quantity,
@@ -73,10 +83,10 @@ export const inventoryRequest = asyncHandler(async (req, res) => {
     notes,
   );
 
-  broadcastAdminInventory(io, newInventoryRequest.request_id);
+  broadcastAdminInventory(io, inventoryRequest.request_id);
   return res.status(201).json({
     success: true,
     message: "Inventory restock request submitted successfully",
-    newInventoryRequest,
+    inventoryItem,
   });
 });

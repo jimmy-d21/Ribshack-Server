@@ -24,6 +24,49 @@ class StoreInventoryModel {
     return rows;
   }
 
+  async getKPIs(branchId) {
+    const sql = `
+    SELECT
+      -- Adequate Stock
+      COUNT(*) FILTER (
+        WHERE current_quantity > (reorder_threshold * 0.80)
+      )::int                                                AS "adequateStock",
+
+      -- Low Stock
+      COUNT(*) FILTER (
+        WHERE current_quantity <= (reorder_threshold * 0.80)
+          AND current_quantity >  (reorder_threshold * 0.50)
+      )::int                                                AS "lowStock",
+
+      -- Critical Stock
+      COUNT(*) FILTER (
+        WHERE current_quantity <= (reorder_threshold * 0.50)
+      )::int                                                AS "criticalStock",
+
+      -- Pending Requests count
+      (
+        SELECT COUNT(*)::int
+        FROM inventory_requests ir
+        WHERE ir.branch_id = $1
+          AND ir.status    = 'PENDING'
+      )                                                     AS "pendingRequests",
+
+      -- Pending item IDs list
+      (
+        SELECT COALESCE(ARRAY_AGG(iri.item_id), '{}')
+        FROM inventory_request_items iri
+        JOIN inventory_requests ir ON ir.request_id = iri.request_id
+        WHERE ir.branch_id = $1
+          AND ir.status    = 'PENDING'
+      )                                                     AS "pendingItemIds"
+
+    FROM inventory_items
+    WHERE branch_id = $1
+  `;
+    const { rows } = await db.query(sql, [branchId]);
+    return rows[0];
+  }
+
   async findById(inventoryId) {
     const sql = `SELECT
                     item_id AS id,
