@@ -21,6 +21,7 @@ const updateRequestStatus = async (requestId, remarks, adminId, status) => {
       );
     }
 
+    let newNotifications = null;
     if (status === "APPROVED" && request.items?.length > 0) {
       for (const lineItem of request.items) {
         if (!lineItem.itemId || !lineItem.quantity) continue;
@@ -32,7 +33,7 @@ const updateRequestStatus = async (requestId, remarks, adminId, status) => {
         );
       }
 
-      await model.createNotification(
+      newNotifications = await model.createNotification(
         client,
         request.branch_id,
         "Restock Request Approved",
@@ -42,7 +43,7 @@ const updateRequestStatus = async (requestId, remarks, adminId, status) => {
     }
 
     if (status === "DECLINED") {
-      await model.createNotification(
+      newNotifications = await model.createNotification(
         client,
         request.branch_id,
         "Restock Request Declined",
@@ -56,8 +57,10 @@ const updateRequestStatus = async (requestId, remarks, adminId, status) => {
 
     const updatedRequest = await model.findById(requestId, client);
 
+    newNotifications.actionUrl = "/inventory";
+
     await client.query("COMMIT");
-    return updatedRequest;
+    return { updatedRequest, newNotifications };
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
