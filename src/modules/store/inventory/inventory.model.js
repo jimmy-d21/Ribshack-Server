@@ -46,7 +46,6 @@ class StoreInventoryModel {
   }
 
   async findBranchById(branchId) {
-    // removed client parameter, use db directly
     const sql = `SELECT
                     b.branch_id AS id,
                     b.branch_name AS name,
@@ -66,21 +65,6 @@ class StoreInventoryModel {
     return rows[0];
   }
 
-  // Todo: remove requested_by later
-  async requestStock(client, branchId, urgency, notes) {
-    const sql = `INSERT INTO inventory_requests
-                 (branch_id, requested_by, priority_level, branch_notes)
-                 VALUES($1, $2, $3, $4)
-                 RETURNING *`;
-    const { rows } = await client.query(sql, [
-      branchId,
-      branchId, // temporary placeholder for requested_by
-      urgency.toUpperCase(),
-      notes,
-    ]);
-    return rows[0];
-  }
-
   async requestStockItem(client, requestId, inventoryId, quantity, notes) {
     const sql = `INSERT INTO inventory_request_items
                  (request_id, item_id, quantity_requested, notes)
@@ -93,6 +77,37 @@ class StoreInventoryModel {
       notes,
     ]);
     return rows[0];
+  }
+
+  async findOrCreateTodayRequest(client, branchId, urgency, notes) {
+    const findSql = `
+    SELECT *
+    FROM inventory_requests
+    WHERE branch_id         = $1
+      AND created_at::date  = CURRENT_DATE
+      AND status            = 'PENDING'
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+    const { rows } = await client.query(findSql, [branchId]);
+
+    if (rows.length > 0) {
+      return rows[0];
+    }
+
+    const insertSql = `
+    INSERT INTO inventory_requests
+      (branch_id, requested_by, priority_level, branch_notes)
+    VALUES ($1, $2, $3, $4)
+    RETURNING *
+  `;
+    const { rows: newRows } = await client.query(insertSql, [
+      branchId,
+      branchId,
+      urgency.toUpperCase(),
+      notes,
+    ]);
+    return newRows[0];
   }
 
   async create(branchId, inventoryData) {

@@ -119,7 +119,7 @@ export const inventoryRequest = async (
       );
     }
 
-    const newInventoryRequest = await model.requestStock(
+    const inventoryRequest = await model.findOrCreateTodayRequest(
       client,
       branchId,
       urgency,
@@ -128,14 +128,14 @@ export const inventoryRequest = async (
 
     await model.requestStockItem(
       client,
-      newInventoryRequest.request_id,
+      inventoryRequest.request_id,
       inventoryId,
       quantity,
       notes,
     );
 
     await client.query("COMMIT");
-    return newInventoryRequest;
+    return inventoryRequest;
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;

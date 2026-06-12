@@ -1,5 +1,15 @@
 import asyncHandler from "../../../utils/asyncHandler.js";
 import * as service from "./inventory.service.js";
+import { adminInventoryRequestModel as model } from "../../admin/inventory-requests/inventoryRequest.model.js";
+
+async function broadcastAdminInventory(io, requestId) {
+  try {
+    const request = await model.findById(requestId);
+    io.emit("adminInventory:new", request);
+  } catch (error) {
+    console.error("Failed to broadcast admin inventory request:", err.message);
+  }
+}
 
 export const getAllInventory = asyncHandler(async (req, res) => {
   const branchId = req.authUser.id;
@@ -49,6 +59,8 @@ export const deleteInventory = asyncHandler(async (req, res) => {
 });
 
 export const inventoryRequest = asyncHandler(async (req, res) => {
+  const io = req.app.get("io");
+
   const { itemId } = req.params;
   const { quantity, urgency, notes } = req.body;
   const branchId = req.authUser.id;
@@ -60,6 +72,8 @@ export const inventoryRequest = asyncHandler(async (req, res) => {
     urgency,
     notes,
   );
+
+  broadcastAdminInventory(io, newInventoryRequest.request_id);
   return res.status(201).json({
     success: true,
     message: "Inventory restock request submitted successfully",
