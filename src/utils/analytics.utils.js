@@ -16,6 +16,16 @@ export const formatTrend = (value) => {
   return growth > 0 ? `+${growth.toFixed(2)}%` : `${growth.toFixed(2)}%`;
 };
 
+export const formatGrowth = (value) => {
+  const growth = ((value.today - value.yesterday) / value.yesterday) * 100;
+
+  return value.today > 0 && value.yesterday > 0
+    ? growth > 0
+      ? `+${growth}`
+      : `-${growth}`
+    : "";
+};
+
 // ============================================================
 // Color maps for chart rendering on the frontend
 // ============================================================

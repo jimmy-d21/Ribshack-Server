@@ -3,32 +3,32 @@ import db from "../../../config/db.js";
 class StoreDashboardModel {
   async kpis(branchId) {
     const sql = `
-    WITH stats AS (
-      SELECT 
-        SUM(CASE WHEN placed_at::date = CURRENT_DATE AND order_status != 'CANCELLED' THEN total_amount ELSE 0 END) as rev_today,
-        SUM(CASE WHEN placed_at::date = CURRENT_DATE - 1 AND order_status != 'CANCELLED' THEN total_amount ELSE 0 END) as rev_yesterday,
-        COUNT(CASE WHEN placed_at::date = CURRENT_DATE AND order_status != 'CANCELLED' THEN 1 END) as ord_today,
-        COUNT(CASE WHEN placed_at::date = CURRENT_DATE - 1 AND order_status != 'CANCELLED' THEN 1 END) as ord_yesterday,
-        AVG(CASE WHEN placed_at::date = CURRENT_DATE AND order_status != 'CANCELLED' THEN total_amount END) as avg_today
-      FROM orders
-      WHERE branch_id = $1 AND placed_at::date >= CURRENT_DATE - 1
-    )
     SELECT JSON_BUILD_OBJECT(
-      'grossRevenue', COALESCE(rev_today, 0),
-      'totalOrders', COALESCE(ord_today, 0),
-      'avgOrderValue', COALESCE(ROUND(avg_today::numeric, 2), 0),
-      'trends', JSON_BUILD_OBJECT(
-        'revenue', CASE 
-          WHEN COALESCE(rev_yesterday, 0) = 0 THEN '+100%' 
-          ELSE (CASE WHEN ((rev_today - rev_yesterday)/rev_yesterday::numeric)*100 >= 0 THEN '+' ELSE '' END) || ROUND(((rev_today - rev_yesterday)/rev_yesterday::numeric)*100, 1)::text || '%'
-        END,
-        'orders', CASE 
-          WHEN COALESCE(ord_yesterday, 0) = 0 THEN '+100%' 
-          ELSE (CASE WHEN ((ord_today - ord_yesterday)::numeric/NULLIF(ord_yesterday, 0))*100 >= 0 THEN '+' ELSE '' END) || ROUND(((ord_today - ord_yesterday)::numeric/NULLIF(ord_yesterday, 0))*100, 1)::text || '%'
-        END
-      )
-    ) AS kpis
-    FROM stats
+        'revenue', JSON_BUILD_OBJECT(
+          'today',     COALESCE(rev_today, 0),
+          'yesterday', COALESCE(rev_yesterday, 0)
+        ),
+        'totalOrders', JSON_BUILD_OBJECT(
+          'today',     COALESCE(ord_today, 0),
+          'yesterday', COALESCE(ord_yesterday, 0)
+        ),
+        'avgOrderValue', JSON_BUILD_OBJECT(
+          'today',     COALESCE(ROUND(avg_today::numeric, 2), 0),
+          'yesterday', COALESCE(ROUND(avg_yesterday::numeric, 2), 0)
+        )
+      ) AS kpis
+      FROM (
+        SELECT 
+          SUM(CASE WHEN placed_at::date = CURRENT_DATE     AND order_status != 'CANCELLED' THEN total_amount ELSE 0 END) AS rev_today,
+          SUM(CASE WHEN placed_at::date = CURRENT_DATE - 1 AND order_status != 'CANCELLED' THEN total_amount ELSE 0 END) AS rev_yesterday,
+          COUNT(CASE WHEN placed_at::date = CURRENT_DATE     AND order_status != 'CANCELLED' THEN 1 END)                 AS ord_today,
+          COUNT(CASE WHEN placed_at::date = CURRENT_DATE - 1 AND order_status != 'CANCELLED' THEN 1 END)                 AS ord_yesterday,
+          AVG(CASE WHEN placed_at::date = CURRENT_DATE     AND order_status != 'CANCELLED' THEN total_amount END)        AS avg_today,
+          AVG(CASE WHEN placed_at::date = CURRENT_DATE - 1 AND order_status != 'CANCELLED' THEN total_amount END)        AS avg_yesterday
+        FROM orders
+        WHERE branch_id = $1
+          AND placed_at::date >= CURRENT_DATE - 1
+      ) AS stats
   `;
 
     const { rows } = await db.query(sql, [branchId]);

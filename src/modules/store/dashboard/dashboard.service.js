@@ -1,13 +1,22 @@
+import { formatGrowth } from "../../../utils/analytics.utils.js";
 import { storeDashboardModel as model } from "./dashboard.model.js";
 
 export const getKPIS = async (branchId) => {
   const kpis = await model.kpis(branchId);
 
   return {
-    grossRevenue: parseFloat(kpis.grossRevenue || 0),
-    totalOrders: parseInt(kpis.totalOrders || 0),
-    avgOrderValue: parseFloat(kpis.avgOrderValue || 0),
-    trends: kpis.trends || { revenue: "+0%", orders: "+0%" },
+    revenue: {
+      todayRevenue: kpis.revenue.today,
+      growth: formatGrowth(kpis.revenue),
+    },
+    totalOrders: {
+      todayOrders: kpis.totalOrders.today,
+      growth: formatGrowth(kpis.totalOrders),
+    },
+    avgOrderValue: {
+      todayAvg: kpis.avgOrderValue.today,
+      growth: formatGrowth(kpis.avgOrderValue),
+    },
   };
 };
 
