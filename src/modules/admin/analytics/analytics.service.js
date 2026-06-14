@@ -3,20 +3,26 @@ import {
   formatTrend,
   REGION_COLORS,
   CATEGORY_COLORS,
+  formatGrowth,
 } from "../../../utils/analytics.utils.js";
 
 export const getKPIS = async () => {
-  const raw = await model.getKPIs();
+  const kpis = await model.getKPIs();
+
   return {
-    totalRevenue: parseInt(raw.total_revenue),
-    totalOrders: parseInt(raw.total_orders),
-    activeStores: parseInt(raw.active_stores),
-    avgOrderValue: parseFloat(raw.avg_order_value),
-    trends: {
-      revenue: formatTrend(raw.trends.revenue),
-      orders: formatTrend(raw.trends.orders),
-      avgOrder: formatTrend(raw.trends.avgOrder),
+    revenue: {
+      totalRevenue: kpis.revenue.today,
+      growth: formatGrowth(kpis.revenue),
     },
+    totalOrders: {
+      totalOrders: kpis.totalOrders.today,
+      growth: formatGrowth(kpis.totalOrders),
+    },
+    avgOrderValue: {
+      avgOrderValue: kpis.avgOrderValue.today,
+      growth: formatGrowth(kpis.avgOrderValue),
+    },
+    activeStores: kpis.activeStores,
   };
 };
 
