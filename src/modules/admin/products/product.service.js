@@ -4,11 +4,13 @@ import AppError from "../../../utils/AppError.js";
 import { adminBranchesModel as branchModel } from "../branches/branches.model.js";
 import { adminProductModel as model } from "./product.model.js";
 
-// Parses the Cloudinary public ID from a full image URL
-const extractCloudinaryPublicId = (imageUrl) =>
-  imageUrl.split("/").pop().split(".")[0];
+const extractCloudinaryPublicId = (imageUrl) => {
+  const parts = imageUrl.split("/");
+  const folder = parts.at(-2);
+  const filename = parts.at(-1).split(".")[0];
+  return `${folder}/${filename}`;
+};
 
-// Syncs product availability and menu visibility across all branches
 const syncProductToBranches = async (client, productId, available) => {
   const branches = await branchModel.findAll();
   for (const branch of branches) {
@@ -58,7 +60,6 @@ export const createProduct = async (productData) => {
 
     const productId = newProduct.product_id;
 
-    // Register the product in all existing branches on creation
     const branches = await branchModel.findAll();
     for (const branch of branches) {
       const branchId = branch.id;

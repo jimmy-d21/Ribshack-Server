@@ -63,14 +63,25 @@ class AppHomeModel {
 
   async findAllCategories(branchId) {
     const sql = `
-    SELECT DISTINCT
-      pc.category_id AS "id",
-      pc.category_name AS "name"
-    FROM product_categories pc
-    JOIN products p ON pc.category_id = p.category_id
-    JOIN branch_menu bm ON p.product_id = bm.product_id
-    WHERE bm.branch_id = $1 AND bm.is_visible = TRUE
-    ORDER BY pc.category_name ASC`;
+      SELECT DISTINCT
+        pc.category_id AS "id",
+        pc.category_name AS "name",
+        (
+          SELECT pi.image_url
+          FROM product_images pi
+          JOIN products p2 ON pi.product_id = p2.product_id
+          JOIN branch_menu bm2 ON p2.product_id = bm2.product_id
+          WHERE p2.category_id = pc.category_id
+            AND bm2.branch_id = $1
+            AND bm2.is_visible = TRUE
+          ORDER BY pi.is_primary DESC
+          LIMIT 1
+        ) AS "imageUrl"
+      FROM product_categories pc
+      JOIN products p ON pc.category_id = p.category_id
+      JOIN branch_menu bm ON p.product_id = bm.product_id
+      WHERE bm.branch_id = $1 AND bm.is_visible = TRUE
+      ORDER BY pc.category_name ASC`;
 
     const { rows } = await db.query(sql, [branchId]);
     return rows;

@@ -32,6 +32,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
 export const deleteProduct = asyncHandler(async (req, res) => {
   const { productId } = req.params;
   const product = await service.deleteProduct(productId);
+
   return res
     .status(200)
     .json({ success: true, message: `${product.name} removed from catalog` });
