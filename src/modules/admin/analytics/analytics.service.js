@@ -29,7 +29,6 @@ export const getKPIS = async () => {
 export const getRegionalRevenue = async () => {
   const rows = await model.getRegionalRevenue();
 
-  // Calculate total revenue across all regions for percentage share
   const totalRevenue = rows.reduce((sum, r) => sum + parseFloat(r.revenue), 0);
 
   return rows.map((r) => ({
@@ -50,16 +49,22 @@ export const getTopBranches = async () => {
   const rows = await model.getTopBranches();
 
   return rows.map((r, index) => {
-    const growthVal = parseFloat(r.growth ?? 0);
+    const today = parseFloat(r.revenue_today ?? 0);
+    const yesterday = parseFloat(r.revenue_yesterday ?? 0);
+
+    const growthVal = {
+      today,
+      yesterday,
+    };
 
     return {
       id: parseInt(r.id),
       name: r.name,
       location: r.location,
       region: r.region,
-      revenue: parseFloat(r.revenue ?? 0),
+      revenue: today,
       orders: parseInt(r.orders ?? 0),
-      growth: formatTrend(growthVal),
+      growth: formatGrowth(growthVal),
       note: index === 0 ? "Top Performer" : null,
     };
   });
@@ -68,7 +73,6 @@ export const getTopBranches = async () => {
 export const getSalesByCategory = async () => {
   const rows = await model.getSalesByCategory();
 
-  // Calculate total revenue across all categories for percentage share
   const totalRevenue = rows.reduce((sum, r) => sum + parseFloat(r.value), 0);
 
   const getPercentage = (value) =>

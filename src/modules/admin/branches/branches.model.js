@@ -196,12 +196,22 @@ class AdminBranchesModel {
          -- TODAY ORDER STATUS METRICS
           (
             SELECT JSON_BUILD_OBJECT(
-              'revenue', COALESCE(SUM(CASE WHEN placed_at::date = CURRENT_DATE THEN total_amount ELSE 0 END), 0),
-              'orders', COUNT(CASE WHEN placed_at::date = CURRENT_DATE THEN 1 END),
-              'avgOrderValue', COALESCE(ROUND(AVG(CASE WHEN placed_at::date = CURRENT_DATE THEN total_amount END), 2), 0),
-              'customer', COUNT(DISTINCT CASE WHEN placed_at::date = CURRENT_DATE THEN customer_id END),
-              'yesterdayRevenue', COALESCE(SUM(CASE WHEN placed_at::date = CURRENT_DATE - 1 THEN total_amount ELSE 0 END), 0),
-              'yesterdayOrders', COUNT(CASE WHEN placed_at::date = CURRENT_DATE - 1 THEN 1 END)
+              'revenue', JSON_BUILD_OBJECT(
+                'today',     COALESCE(SUM(CASE WHEN placed_at::date = CURRENT_DATE     THEN total_amount ELSE 0 END), 0),
+                'yesterday', COALESCE(SUM(CASE WHEN placed_at::date = CURRENT_DATE - 1 THEN total_amount ELSE 0 END), 0)
+              ),
+              'totalOrders', JSON_BUILD_OBJECT(
+                'today',     COUNT(CASE WHEN placed_at::date = CURRENT_DATE     THEN 1 END),
+                'yesterday', COUNT(CASE WHEN placed_at::date = CURRENT_DATE - 1 THEN 1 END)
+              ),
+              'avgOrderValue', JSON_BUILD_OBJECT(
+                'today',     COALESCE(ROUND(AVG(CASE WHEN placed_at::date = CURRENT_DATE     THEN total_amount END), 2), 0),
+                'yesterday', COALESCE(ROUND(AVG(CASE WHEN placed_at::date = CURRENT_DATE - 1 THEN total_amount END), 2), 0)
+              ),
+              'customer', JSON_BUILD_OBJECT(
+                'today',     COUNT(DISTINCT CASE WHEN placed_at::date = CURRENT_DATE     THEN customer_id END),
+                'yesterday', COUNT(DISTINCT CASE WHEN placed_at::date = CURRENT_DATE - 1 THEN customer_id END)
+              )
             )
             FROM orders
             WHERE branch_id = b.branch_id
