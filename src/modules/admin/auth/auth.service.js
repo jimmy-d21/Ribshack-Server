@@ -6,7 +6,7 @@ export const login = async (email, password) => {
   const admin = await model.findByEmail(email);
   if (!admin) throw new AppError("Invalid credentials", 401);
 
-  const isMatch = password === admin.password;
+  const isMatch = await bcrypt.compare(password, admin.password);
   if (!isMatch) throw new AppError("Invalid credentials", 401);
 
   delete admin.password;
